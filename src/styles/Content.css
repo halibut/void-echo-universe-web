@@ -1,0 +1,99 @@
+.title {
+    font-size: 2em;
+    font-weight: bold;
+    text-align: center;
+    color: #fff;
+}
+
+.author {
+    font-size: 2em;
+    font-weight: bold;
+    text-align: center;
+    color: #fff
+}
+
+.start-button {
+    font-size: 40px;
+    font-weight: bold;
+    text-align: center;
+    padding: 20px;
+    border-style: solid;
+    border-color: #aaa;
+    border-radius: 16px;
+    border-width: 1px;
+    color: #fff;
+    text-decoration: none;
+}
+
+.start-button:after {
+    text-decoration: none;
+}
+
+.start-button:hover {
+    border-color: #fff;
+    text-decoration: none;
+}
+
+.track-item {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    cursor: pointer;
+    font-weight: normal;
+    font-size: 0.8em;
+    margin-top: 3px;
+    margin-bottom: 3px;
+    margin-left: 20px;
+    margin-right: 20px;
+}
+
+.track-item:hover {
+    font-weight: bold;
+}
+
+.suggested-track-ind {
+    display: flex;
+    height: 100%;
+    width: 20px;
+    align-items: 'center';
+    justify-content: center;
+}
+
+.track-length {
+    width: 80px;
+    text-align: right;
+}
+
+.track-title {
+    flex: 1;
+    text-align: left;
+}
+
+.option-item {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    cursor: pointer;
+    font-weight: normal;
+    font-size: 0.8em;
+    margin-top: 3px;
+    margin-bottom: 3px;
+    margin-left: 20px;
+    margin-right: 20px;
+}
+.option-item:hover {
+    font-weight: bold;
+}
+.option-title {
+    flex: 1;
+    text-align: left;
+}
+.option-value {
+    width: 0.8em;
+    height: 0.8em;
+    border-width: 2px;
+    border-style: solid;
+    border-color: #ddd;
+    align-items: center;
+    justify-content: center;    
+}

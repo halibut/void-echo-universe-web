@@ -1,0 +1,298 @@
+.anim-time-fast {
+    animation-duration: 500ms;
+}
+
+.anim-time-normal {
+    animation-duration: 1s;
+}
+
+.anim-time-slow {
+    animation-duration: 2s;
+}
+
+.anim-time-extra-slow {
+    animation-duration: 5s;
+}
+
+.anim-time-1-min {
+    animation-duration: 60s;
+}
+.anim-time-2-min {
+    animation-duration: 120s;
+}
+.anim-time-3-min {
+    animation-duration: 180s;
+}
+.anim-time-4-min {
+    animation-duration: 240s;
+}
+.anim-time-5-min {
+    animation-duration: 300s;
+}
+.anim-time-6-min {
+    animation-duration: 360s;
+}
+.anim-time-7-min {
+    animation-duration: 360s;
+}
+
+/******************************
+* Change from solid black background to 0 opacity background
+*******************************/
+.disolve-solid-black-bg {
+    background-color: #000f;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    .disolve-solid-black-bg {
+        background-color: #0000;
+        animation-name: disolve-solid-black-bg-anim;
+        animation-timing-function: ease-in;
+        animation-iteration-count: 1;
+        animation-direction: forwards;
+    }
+}
+
+@keyframes disolve-solid-black-bg-anim {
+    from {
+        background-color: #000f;
+    }
+    to {
+        background-color: #0000;
+    }
+}
+
+/******************************
+* Pulsing Glowing effect
+*******************************/
+.spin-bg-slow {
+    transform: rotate(0deg);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .spin-bg-slow {
+    animation: 300s linear infinite spin-bg-anim;
+  }
+}
+
+@keyframes spin-bg-anim {
+  from {
+      transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/******************************
+* Pulsing Glowing effect
+*******************************/
+.glowing-bg {
+    filter: blur(2px);
+    position: absolute;
+    left: 0;
+    right: 0;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .glowing-bg {
+    animation: 2s ease-in-out infinite alternate glow-bg-anim;
+  }
+}
+
+@keyframes glow-bg-anim {
+  from {
+      filter: blur(2px);
+  }
+  to {
+      filter: blur(5px);
+  }
+}
+
+/******************************
+* Glowing effect
+*******************************/
+.glowing {
+    filter: blur(1px);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .glowing {
+    animation: 2s ease-in-out infinite alternate glow-anim;
+  }
+}
+
+@keyframes glow-anim {
+  from {
+      filter: blur(1px);
+  }
+  to {
+      filter: blur(3px);
+  }
+}
+
+.glowing-blur {
+    filter: blur(5px);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .glowing-blur {
+    animation: 2s ease-in-out infinite alternate glow-blur-anim;
+  }
+}
+
+@keyframes glow-blur-anim {
+  from {
+      filter: blur(5px);
+  }
+  to {
+      filter: blur(20px);
+  }
+}
+
+
+/******************************
+* Zoom way in
+*******************************/
+.zoom-in-transition-slow {
+    filter: blur(0px);
+    transform: scale(1);
+    animation: zoom-in-anim 10s ease-in 1 forwards;
+}
+
+.zoom-in-transition-fast {
+    filter: blur(0px);
+    transform: scale(1);
+    animation: zoom-in-anim 1s ease-in 1 forwards;
+}
+
+.zoom-in-transition-x {
+    filter: blur(0px);
+    transform: scale(1);
+    animation-name: zoom-in-anim;
+    animation-timing-function: ease-in;
+    animation-iteration-count: 1;
+    animation-direction: forwards;
+}
+
+@keyframes zoom-in-anim {
+    from {
+        filter: blur(0px);
+        transform: scale(1);
+        opacity: 1;
+    }
+    to {
+        filter: blur(20px);
+        transform: scale(5);
+        opacity: 0;
+    }
+}
+
+
+/******************************
+* Slow BG Zoom In
+*******************************/
+.zoom-bg-slow {
+    transform: scale(1);
+    animation-timing-function: ease-in-out;
+    animation-direction: normal;
+    animation-name: zoom-bg-slow-anim;
+}
+
+@keyframes zoom-bg-slow-anim {
+    from {
+        transform: scale(1);
+    }
+    to {
+        transform: scale(2);
+    }
+}
+
+
+/****************************
+* Zoom sequencer
+****************************/
+.zoom-in-in {
+    opacity: 0;
+    filter: blur(20px);
+    transform: scale(0);
+}
+
+.zoom-in-out {
+    opacity: 1;
+    filter: blur(0px);
+    transform: scale(1);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    .zoom-in-in {
+        animation-timing-function: ease-in-out;
+        animation-direction: normal;
+        animation-name: zoom-in-in-anim;
+    }
+    .zoom-in-out {
+        animation-timing-function: ease-in-out;
+        animation-direction: normal;
+        animation-name: zoom-in-out-anim;
+    }
+}
+  
+@keyframes zoom-in-in-anim {
+    from {
+        opacity: 0;
+        filter: blur(20px);
+        transform: scale(0);
+    }
+    to {
+        opacity: 1;
+        filter: blur(0px);
+        transform: scale(1);
+    }
+}
+
+@keyframes zoom-in-out-anim {
+    from {
+        opacity: 1;
+        filter: blur(0px);
+        transform: scale(1);
+    }
+    to {
+        opacity: 0;
+        filter: blur(20px);
+        transform: scale(10);
+    }
+}
+
+
+/****************************
+* Fade In/Out
+****************************/
+.fade-in {
+    animation-timing-function: ease-in-out;
+    animation-direction: normal;
+    animation-name: fade-in-anim;
+}
+
+.fade-out {
+    animation-timing-function: ease-in-out;
+    animation-direction: normal;
+    animation-name: fade-out-anim;
+}
+
+@keyframes fade-in-anim {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes fade-out-anim {
+    from {
+        opacity: 1;
+    }
+    to {
+        opacity: 0;
+    }
+}
