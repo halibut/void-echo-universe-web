@@ -1,3 +1,4 @@
+
 .anim-time-fast {
     animation-duration: 500ms;
 }
@@ -152,6 +153,36 @@
 
 
 /******************************
+* Change color/hue
+*******************************/
+.color-wheel {
+    filter: blur(1px) sepia(0%) saturate(10) hue-rotate(0turn);
+    position: relative;
+}
+
+
+@media (prefers-reduced-motion: no-preference) {
+  .color-wheel {
+    animation: 120s linear infinite color-wheel-anim;
+  }
+}
+
+@keyframes color-wheel-anim {
+  0% { filter: blur(1px) sepia(0%) saturate(10) hue-rotate(0turn); }
+  10% { filter: blur(10px) sepia(50%) saturate(10) hue-rotate(.1turn); }
+  20% { filter: blur(1px) sepia(100%) saturate(10) hue-rotate(.2turn); }
+  30% { filter: blur(10px) sepia(100%) saturate(10) hue-rotate(.4turn); }
+  40% { filter: blur(1px) sepia(100%) saturate(10) hue-rotate(.4turn); }
+  50% { filter: blur(10px) sepia(100%) saturate(10) hue-rotate(.5turn); }
+  60% { filter: blur(1px) sepia(100%) saturate(10) hue-rotate(.6turn); }
+  70% { filter: blur(10px) sepia(100%) saturate(10) hue-rotate(.7turn); }
+  80% { filter: blur(1px) sepia(100%) saturate(10) hue-rotate(.8turn); }
+  90% { filter: blur(10px) sepia(50%) saturate(10) hue-rotate(.9turn); }
+  100% { filter: blur(1px) sepia(0%) saturate(10) hue-rotate(1.0turn); }
+}
+
+
+/******************************
 * Zoom way in
 *******************************/
 .zoom-in-transition-slow {
@@ -213,15 +244,15 @@
 * Zoom sequencer
 ****************************/
 .zoom-in-in {
-    opacity: 0;
-    filter: blur(20px);
-    transform: scale(0);
-}
-
-.zoom-in-out {
     opacity: 1;
     filter: blur(0px);
     transform: scale(1);
+}
+
+.zoom-in-out {
+    opacity: 0;
+    filter: blur(20px);
+    transform: scale(10);
 }
 
 @media (prefers-reduced-motion: no-preference) {
@@ -268,15 +299,24 @@
 * Fade In/Out
 ****************************/
 .fade-in {
-    animation-timing-function: ease-in-out;
-    animation-direction: normal;
-    animation-name: fade-in-anim;
+    opacity: 1;
 }
 
 .fade-out {
-    animation-timing-function: ease-in-out;
-    animation-direction: normal;
-    animation-name: fade-out-anim;
+    opacity: 2;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    .fade-in {
+        animation-timing-function: ease-in-out;
+        animation-direction: normal;
+        animation-name: fade-in-anim;
+    }
+    .fade-out {
+        animation-timing-function: ease-in-out;
+        animation-direction: normal;
+        animation-name: fade-out-anim;
+    }
 }
 
 @keyframes fade-in-anim {
@@ -294,5 +334,37 @@
     }
     to {
         opacity: 0;
+    }
+}
+
+
+.img-zoom-pan {
+    --bg-initial-zoom: 1;
+    --bg-final-zoom: 4;
+    --bg-initial-x: 0%;
+    --bg-initial-y: 0%;
+    --bg-final-x: 5%;
+    --bg-final-y: 10%;
+    object-fit: cover;
+    transform: scale(var(--bg-final-zoom))
+        translate(var(--bg-final-x), var(--bg-final-y));
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    .img-zoom-pan {
+        animation-timing-function: ease-in-out;
+        animation-direction: normal;
+        animation-name: img-zoom-pan-anim;
+    }
+}
+
+@keyframes img-zoom-pan-anim {
+    from {
+        transform: scale(var(--bg-initial-zoom))
+            translate(var(--bg-initial-x), var(--bg-initial-y));
+    }
+    to {
+        transform: scale(var(--bg-final-zoom))
+            translate(var(--bg-final-x), var(--bg-final-y));
     }
 }

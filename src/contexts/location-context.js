@@ -6,8 +6,7 @@ export default LocationContext;
 
 class LocationServiceCls {
     constructor() {
-        this.path = "/";
-
+        this.path = null;
         this.onPathChanged = null;
     }
 
@@ -71,12 +70,12 @@ export function handleAnchorNav(path, navigationOptions) {
     LocationService.handleAnchorNav(path, navigationOptions);
 };
 
-export function setLocation(path, windowTitle) {
-    LocationService.setLocation(path, windowTitle);
+export function setLocation(path, windowTitle, navigationOptions) {
+    LocationService.setLocation(path, windowTitle, navigationOptions);
 };
 
 export function LocationContextProvider({children}) {
-    const [location, setLocation] = useState({path:"/", navOptions:{}});
+    const [location, setLocation] = useState({path:null, navOptions:{}});
 
     /** Set-up our location context function when this component loads */
     useEffect(() => {

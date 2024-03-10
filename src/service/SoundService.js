@@ -60,8 +60,14 @@ class SoundServiceCls {
             this.mediaTargetNode.connect(this.fftNode);
 
             //Set the gain/volume to whatever was last set by the user
-            console.log("Last volume: "+State.getLastVolume());
-            this.gainNode.gain.value = State.getLastVolume();
+            if (State.isMuted()) {
+                console.log("Sound was muted last session.");
+                this.gainNode.gain.value = 0;
+            } else {
+                console.log("Last volume: "+State.getLastVolume());
+                this.gainNode.gain.value = State.getLastVolume();
+            }
+            
         }
         catch(e) {
             console.log("Error initializing AudioContext. Probably awaiting user input event.", e);
@@ -150,6 +156,9 @@ class SoundServiceCls {
 
     setMuted = (muted) => {
         if(muted) {
+            if (this.isSuspended()) {
+                this.tryResume();
+            }
             this.gainNode.gain.setValueAtTime(this.gainNode.gain.value, this.ac.currentTime);
             this.gainNode.gain.linearRampToValueAtTime(0, this.ac.currentTime + 0.1);
         }
@@ -157,6 +166,7 @@ class SoundServiceCls {
             this.gainNode.gain.setValueAtTime(0, this.ac.currentTime);
             this.gainNode.gain.linearRampToValueAtTime(State.getLastVolume(), this.ac.currentTime + 0.1);
         }
+        State.setMuted(muted);
     };
     
     isMuted = () => {

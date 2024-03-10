@@ -49,7 +49,7 @@ class UtilsApi {
   };
 
   trackNameToPath = (name) => {
-    return "/" + name.replace(/\s/ig, "-").toLowerCase()
+    return "/" + name.replace(/[^a-zA-Z0-9]+/ig, "-").toLowerCase()
   };
 }
 

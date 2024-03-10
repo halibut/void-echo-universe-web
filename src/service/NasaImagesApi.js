@@ -64,16 +64,45 @@ class NasaImagesApiCls {
 
             if (resp.ok) {
                 const data = await resp.json();
-                return data.collections.items.map(item => item.href);
+                const resolutions = {};
+
+                //Get all hrefs available for this asset
+                data.collection.items.forEach(item => {
+                    const href = item.href;
+                    const lastDotIndex = href.lastIndexOf(".");
+                    const lastTildeIndex = href.lastIndexOf("~");
+                    
+                    if (lastTildeIndex > 0 && lastDotIndex > lastTildeIndex) {
+                        const qualityStr = href.substring(lastTildeIndex+1, lastDotIndex);
+                        resolutions[qualityStr] = href;
+                    }
+                });
+
+                //Fill in resolutions so we can always depend on an image being there
+                //even if there isn't an image high enough resolution for our selection
+                if (!resolutions.small) {
+                    resolutions.small = resolutions.thumb;
+                }
+                if (!resolutions.medium) {
+                    resolutions.medium = resolutions.small;
+                }
+                if (!resolutions.large) {
+                    resolutions.large = resolutions.medium;
+                }
+                if (!resolutions.orig) {
+                    resolutions.orig = resolutions.large;
+                }
+
+                return resolutions;
             }
             else {
                 console.warn("Error getting image URLs for NASA asset: "+nasaAssetId);
-                return [];
+                return null;
             }
         }
         catch(e) {
             console.error("Error getting image URLs for NASA asset: "+nasaAssetId, e);
-            return [];
+            return null;
         }
     }
 }

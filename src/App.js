@@ -11,10 +11,11 @@ import Splash from './pages/Splash';
 import Title from './pages/Title';
 import Constants from './constants';
 import MainMenu from './pages/MainMenu';
-import { createTrackPage } from './components/TrackPage';
-import SongData from './SongData';
+import { createTrackPage } from './pages/TrackPage';
+import SongData from './service/SongData';
 import Utils from './utils/Utils';
 import NasaTestPage from './pages/NasaTestPage';
+import HelperPage from './pages/Helper';
 //import Start from '../chapters/Chapter00/Chapter00View';
 
 function createSongScreen(sd) {
@@ -41,6 +42,7 @@ const pages = [
   createSongScreen(SongData.track10),
   createSongScreen(SongData.track11),
   {screen: NasaTestPage, title:"Nasa Test", path:"/nasa"},
+  {screen: HelperPage, title:"helper", path:"/helper"}
 ]
 
 console.log("App Pages:", JSON.stringify(pages));

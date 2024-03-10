@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useRef } from "react";
 import Constants from "../constants";
 import SoundService from "../service/SoundService";
-import SongData from "../SongData";
+import SongData from "../service/SongData";
+import { setLocation } from "../contexts/location-context";
 
-const Title = ({nav, fullyLoaded}) => {
+const Title = ({fullyLoaded}) => {
     const nextRequested = useRef(false);
     const autoTimeout = useRef(null);
 
@@ -18,8 +19,8 @@ const Title = ({nav, fullyLoaded}) => {
         }
 
         nextRequested.current = true;
-        nav.navTo("/main", {time:5000});
-    }, [nav]);
+        setLocation("/main", null, {time:5000});
+    }, []);
 
     useEffect(() => {
         if (fullyLoaded) {

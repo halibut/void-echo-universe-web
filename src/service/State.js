@@ -3,14 +3,20 @@ import Subscription from "./Subscription";
 class StateApi {
 
     constructor() {
-        this.stateSubscribers = new Subscription("global-state"); 
+        this.stateSubscribers = new Subscription("global-state");
+        this.state = {}
+
+        const appStateStr = localStorage.getItem("app-state");
+        if (appStateStr) {
+            this.state = JSON.parse(appStateStr);
+            console.log("Loading app state: "+JSON.stringify(this.state));
+        }
     }
 
-
     getStateValue = (key, defaultVal) => {
-        const val = localStorage.getItem(key);
+        const val = this.state[key];
         if(val !== undefined && val !== null) {
-            return JSON.parse(val);
+            return val;
         }
         else {
             return defaultVal;
@@ -19,14 +25,16 @@ class StateApi {
 
     setStateValue = (key, value) => {
         if(value === null || value === undefined) {
-            localStorage.removeItem(key);
+            delete this.state[key];
+            localStorage.setItem("app-state", JSON.stringify(this.state));
             this.stateSubscribers.notifySubscribers({
                 state: key,
                 value: null,
             });
         }
         else {
-            localStorage.setItem(key, JSON.stringify(value));
+            this.state[key] = value;
+            localStorage.setItem("app-state", JSON.stringify(this.state));
             this.stateSubscribers.notifySubscribers({
                 state: key,
                 value: value,
@@ -42,6 +50,14 @@ class StateApi {
         return this.getStateValue("last-volume", 1);
     }
 
+    setMuted = (muted) =>{
+        this.setStateValue("muted", muted);
+    }
+
+    isMuted = () =>{
+        return this.getStateValue("muted", false);
+    }
+
     getCurrentTrack = () => {
         return this.getStateValue("currentTrack", 1);
     }
@@ -51,7 +67,7 @@ class StateApi {
     }
 
     getImageQuality = () => {
-        return this.getStateValue("img-quality", "md");
+        return this.getStateValue("img-quality", "large");
     }
 
     setImageQuality = qual => {

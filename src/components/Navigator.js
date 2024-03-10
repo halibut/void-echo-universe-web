@@ -1,23 +1,16 @@
 import {
-  useState,
   useRef,
   useContext,
   useCallback,
   useEffect,
-  createContext,
+  useReducer,
 } from "react";
 
-import { setLocation } from "../contexts/location-context";
 import LocationContext from "../contexts/location-context";
 import { setBackgroundImage } from "../service/BackgroundService";
 import Background from "../components/Background";
-import SoundService from "../service/SoundService";
 import Sound from "./Sound";
 import AudioControls from "./AudioControls";
-
-
-export const NavigationContext = createContext(null);
-
 
 const DEFAULT_OPTS = {
   time: 1000,
@@ -53,174 +46,215 @@ const NavScreenContainer = ({
   );
 };
 
+function navReducer(state, action) {
+  const {
+    screenInd,
+    loadingScreenInd,
+    animOptions,
+  } = state;
+
+  if (action.type === "start-transition") {
+    const screens = action.screens;
+    const options = action.options;
+    const path = action.path;
+    const newInd = screens.findIndex((s) => s.path === path);
+
+    if (newInd === screenInd) {
+      if (newInd >= 0) {
+        console.log(`Navigating to same screen: ${screens[newInd].path}`);
+      }
+      return state;
+    }
+
+    const opts = { ...DEFAULT_OPTS, ...options };
+
+    //If there's no transition time, then just update the indices
+    if (!opts || !opts.time || opts.time <= 0 || newInd < 0) {
+      return {
+        screenInd: newInd,
+        loadingScreenInd: null,
+        animOptions: null,
+      }
+    } else {
+      return {
+        screenInd: screenInd,
+        loadingScreenInd: newInd,
+        animOptions: opts,
+      }
+    }
+  }
+  else if (action.type === "end-transition") {
+    if (screenInd !== null && loadingScreenInd !== null) {
+      return {
+        screenInd: loadingScreenInd,
+        loadingScreenInd: null,
+        animOptions: null
+      }
+    }
+    else {
+      return state;
+    }
+  }
+}
+
 const Navigator = ({ screens, NotFoundPage }) => {
-  const [stateInd, setStateInd] = useState(0);
+  const [state, dispatch] = useReducer(navReducer, {screenInd: null, loadingScreenInd: null, animOptions: null});
 
-  const screenIndRef = useRef(0);
-  const loadingScreenIndRef = useRef(null);
   const navAnimTimeout = useRef(null);
-  const animOptions = useRef(null);
-
+  
   const location = useContext(LocationContext);
 
-  const endTransition = useCallback(
-    (newPath) => {
-      screenIndRef.current = loadingScreenIndRef.current;
-      loadingScreenIndRef.current = null;
-      animOptions.current = null;
+  const killTransition = useCallback((p) => {
+    if (navAnimTimeout.current) {
+      window.clearTimeout(navAnimTimeout.current);
+      navAnimTimeout.current = null;
+      dispatch({type:"end-transition"});
+    }
+  },[]);
 
-      if (screenIndRef.current >= 0 && screenIndRef.current < screens.length) {
-        const newScreen = screens[screenIndRef.current];
-        const newPath = newScreen.path;
-        setLocation(newPath, newScreen.title);
-      } else {
-        setLocation(newPath);
-      }
+  const startTransition = useCallback((p, options) => {
+    const opts = { ...DEFAULT_OPTS, ...options };
 
-      setStateInd((s) => s + 1);
-    },
-    [screens]
-  );
+    dispatch({
+      type: "start-transition", 
+      screens: screens,
+      path: p,
+      options: opts,
+    });
 
-  const killTransition = useCallback(
-    (p) => {
-      //Handle the scenario where the page is already transitioning
-      //In that case kill the transition
-      if (loadingScreenIndRef.current !== null) {
-        if (navAnimTimeout.current) {
-          window.clearTimeout(navAnimTimeout.current);
-          navAnimTimeout.current = null;
-        }
-        endTransition(p);
-      }
-    },
-    [endTransition]
-  );
+    const transitionTime = opts?.time ? opts.time : 0;
 
-  const startTransition = useCallback(
-    (p, options) => {
-      const ind = screens.findIndex((s) => s.path === p);
-
-      if (ind === screenIndRef.current) {
-        if (ind >= 0) {
-          console.log(`Navigating to same screen: ${screens[ind].path}`);
-        }
-        return;
-      }
-
-      const opts = { ...DEFAULT_OPTS, ...options };
-
-      //Set the index of the next screen
-      loadingScreenIndRef.current = ind;
-      //If there's no transition time, then just update the indices
-      if (!opts || !opts.time || opts.time <= 0 || ind < 0) {
-        endTransition(p);
-      } else {
-        animOptions.current = opts;
-
-        navAnimTimeout.current = window.setTimeout(() => {
-          navAnimTimeout.current = null;
-          endTransition(p);
-        }, opts.time);
-      }
-
-      //Update some state so the component rerenders
-      setStateInd((s) => s + 1);
-    },
-    [screens, endTransition]
-  );
-
-  const navTo = useCallback(
-    (p, options) => {
-      killTransition(p);
-      startTransition(p, options);
-    },
-    [killTransition, startTransition]
-  );
+    if (transitionTime <= 0) {
+      dispatch({type: "end-transition"});
+    } else {
+      navAnimTimeout.current = window.setTimeout(() => {
+        navAnimTimeout.current = null;
+        dispatch({type: "end-transition"});
+      }, transitionTime);
+    }
+  }, [screens]);
 
   useEffect(() => {
-    console.log("Got Navigation change: "+JSON.stringify(location));
-    const {path, navOptions} = location;
-    navTo(path, navOptions ? navOptions : { time: 0 });
-  }, [location, navTo]);
+    if (location !== null) {
+      console.log("Got Navigation change: "+JSON.stringify(location));
+      const {path, navOptions} = location;
+      killTransition(path);
+      startTransition(path, navOptions);
+    }
+  }, [location, killTransition, startTransition]);
 
   useEffect(() => {
-    setBackgroundImage(require("../images/chapter_00_bg.jpg"), {});
+    setBackgroundImage(require("../images/chapter_00_bg.jpg"), {
+      staticStyle: {opacity: 0.3, transform:`scale(3)`},
+      imageClass: "spin-bg-slow",
+      transitionTime: 0,
+    });
   }, []);
 
+  const {
+    screenInd,
+    loadingScreenInd,
+    animOptions
+  } = state;
+
   let CurrentComp = null;
-  if (screenIndRef.current < 0 || screenIndRef.current > screens.length - 1) {
-    CurrentComp = NotFoundPage;
-  } else {
-    CurrentComp = screens[screenIndRef.current].screen;
+  if (screenInd !== null) {
+    if (screenInd < 0 || screenInd > screens.length - 1) {
+      CurrentComp = NotFoundPage;
+    } else {
+      CurrentComp = screens[screenInd].screen;
+    }
   }
 
   let LoadingComp = null;
-  if (
-    loadingScreenIndRef.current &&
-    loadingScreenIndRef.current > 0 &&
-    loadingScreenIndRef.current < screens.length
-  ) {
-    LoadingComp = screens[loadingScreenIndRef.current].screen;
+  if (loadingScreenInd != null) {
+    if (loadingScreenInd < 0 || loadingScreenInd > screens.length - 1) {
+      LoadingComp = NotFoundPage;
+    }
+    else {
+      LoadingComp = screens[loadingScreenInd].screen;
+    }
   }
 
-  const nav = {
-    navTo: navTo,
-    //next: next,
-    //back: back,
-    //navToChatper: navToChapter,
-    //chapters: chapters.map((c) => c.name)
-  };
+  //If a component is loading in then put it first in the stack so it's "underneath" the current component
+  const comps = [];
+  if (LoadingComp && animOptions.direction === "in") {
+    comps.push(
+      <NavScreenContainer key={loadingScreenInd}
+        isLoadingIn={true} 
+        isLoadingOut={false}
+        fullyLoaded={false}
+        animOptions={animOptions}
+      >
+        <LoadingComp key={loadingScreenInd}
+          isLoadingIn={true} 
+          isLoadingOut={false}
+          fullyLoaded={false}
+          animOptions={animOptions}
+        />
+      </NavScreenContainer>
+    );
+  }
+
+  //Render the current component 
+  if (screenInd !== null) {
+    comps.push(
+      <NavScreenContainer  key={screenInd}
+        isLoadingOut={!!LoadingComp}
+        isLoadingIn={!!LoadingComp}
+        fullyLoaded={!LoadingComp}
+        animOptions={animOptions}
+      >
+        <CurrentComp key={screenInd}
+          fullyLoaded={!LoadingComp}
+          isLoadingIn={false}
+          isLoadingOut={!!LoadingComp}
+          animOptions={animOptions} />
+      </NavScreenContainer>
+    );
+  }
+
+  if (LoadingComp && animOptions.direction === "out") {
+    comps.push(
+      <NavScreenContainer key={loadingScreenInd}
+        isLoadingIn={true}
+        isLoadingOut={false}
+        fullyLoaded={true}
+        animOptions={animOptions}
+      >
+        <LoadingComp key={loadingScreenInd}
+          isLoadingIn={true}
+          isLoadingOut={false}
+          fullyLoaded={true}
+          animOptions={animOptions}
+        />
+      </NavScreenContainer>
+    );
+  }
 
   return (
-    <NavigationContext.Provider value={nav}>
-      <div className="main-nav">
-        <Background />
-        <Sound />
+    <div className="main-nav">
+      <Background />
+      <Sound />
 
-        {LoadingComp && animOptions.current.direction === "in" && (
-          <NavScreenContainer
-            key={loadingScreenIndRef.current}
-            isLoadingIn={true}
-            animOptions={animOptions.current}
-          >
-            <LoadingComp nav={nav} />
-          </NavScreenContainer>
-        )}
-        <NavScreenContainer
-          key={screenIndRef.current}
-          isLoadingOut={!!LoadingComp}
-          animOptions={animOptions.current}
-        >
-          <CurrentComp nav={nav} fullyLoaded={!LoadingComp} isLoadingOut={!!LoadingComp} animOptions={animOptions.current} />
-        </NavScreenContainer>
-        {LoadingComp && animOptions.current.direction === "out" && (
-          <NavScreenContainer
-            key={loadingScreenIndRef.current}
-            isLoadingIn={true}
-            animOptions={animOptions.current}
-          >
-            <LoadingComp nav={nav} />
-          </NavScreenContainer>
-        )}
+      {comps}
 
-        <div
-          className="row"
-          style={{
-            height: 50,
-            position: "absolute",
-            left: 0,
-            bottom: 0,
-            width: "100%",
-            zIndex: 3,
-          }}
-        >
-          <AudioControls />
-        </div>
-
-        {/*<SoundCheck />*/}
+      <div
+        className="row"
+        style={{
+          height: 50,
+          position: "absolute",
+          left: 0,
+          bottom: 0,
+          width: "100%",
+          zIndex: 3,
+        }}
+      >
+        <AudioControls />
       </div>
-    </NavigationContext.Provider>
+
+      {/*<SoundCheck />*/}
+    </div>
   );
 };
 

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import State from "../service/State";
 import SoundService from "../service/SoundService";
-import SongData from "../SongData";
+import SongData from "../service/SongData";
 import Link from "../components/Link";
 import Utils from "../utils/Utils";
 
@@ -131,7 +131,7 @@ const TrackItem = ({songData, selected}) => {
           <h2 className='title'>Options</h2>
           <OptionItem optKey='show-notes' title='Album Notes' defaultVal={true}/>
           <OptionItem optKey='show-visuals' title='Vizualizations' defaultVal={true}/>
-          <MultiOptionItem optKey='img-quality' title='Image Quality' options={[{value:'lg', label:'High'}, {value:'md', label:'Medium'}, {value:'sm', label:'Small'},]} defaultVal={'md'}/>
+          <MultiOptionItem optKey='img-quality' title='Image Quality' options={[{value:'orig', label:'Highest'}, {value:'large', label:'High'}, {value:'medium', label:'Medium'}, {value:'small', label:'Small'},]} defaultVal={'large'}/>
         </div>
         
       </div>

@@ -1,7 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import Constants from "../constants";
-import SoundService from "../service/SoundService";
-import SongData from "../SongData";
+import { useEffect, useState } from "react";
 import NasaImagesApi from "../service/NasaImagesApi";
 
 const ImgSelect = ({nasaItem, onSelect, onRemove}) => {
@@ -23,7 +20,7 @@ const NasaTestPage = ({nav, fullyLoaded}) => {
     const [s, setS] = useState("");
     const [images, setImages] = useState([]);
     const [selectedImages, setSelectedImages] = useState([]);
-    
+
     const submit = async (e) => {
         e.preventDefault();
 
