@@ -163,7 +163,7 @@
 
 @media (prefers-reduced-motion: no-preference) {
   .color-wheel {
-    animation: 120s linear infinite color-wheel-anim;
+    animation: 240s linear infinite color-wheel-anim;
   }
 }
 
@@ -303,7 +303,7 @@
 }
 
 .fade-out {
-    opacity: 2;
+    opacity: 0;
 }
 
 @media (prefers-reduced-motion: no-preference) {
@@ -367,4 +367,37 @@
         transform: scale(var(--bg-final-zoom))
             translate(var(--bg-final-x), var(--bg-final-y));
     }
+}
+
+
+/****************************
+* Logo Animagion
+****************************/
+.logo-spin-r1 { transform: rotate(0deg); }
+.logo-spin-r2 { transform: rotate(0deg); }
+.logo-spin-r3 { transform: rotate(0deg); }
+.logo-spin-r4 { transform: rotate(0deg); }
+.logo-spin-r5 { transform: rotate(0deg); }
+
+@media (prefers-reduced-motion: no-preference) {
+    .logo-spin-r1 {
+        animation: logo-spin-anim 6s linear infinite forwards;
+    }
+    .logo-spin-r2 {
+        animation: logo-spin-anim 8s ease-in-out infinite forwards;
+    }
+    .logo-spin-r3 {
+        animation: logo-spin-anim 16s linear infinite forwards;
+    }
+    .logo-spin-r4 {
+        animation: logo-spin-anim 24s linear infinite forwards;
+    }
+    .logo-spin-r5 {
+        animation: logo-spin-anim 48s ease-in-out infinite forwards;
+    }
+}
+
+@keyframes logo-spin-anim {
+    0% { transform: rotate(0); }
+    100% { transform: rotate(360deg); }
 }

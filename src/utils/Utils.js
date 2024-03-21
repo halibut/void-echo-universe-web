@@ -1,3 +1,5 @@
+import { SongList } from "../service/SongData";
+
 class UtilsApi {
   toSeconds = (string) => {
     const parts = string.split(":");
@@ -49,8 +51,53 @@ class UtilsApi {
   };
 
   trackNameToPath = (name) => {
-    return "/" + name.replace(/[^a-zA-Z0-9]+/ig, "-").toLowerCase()
+    return "/" + name
+      .toLowerCase()
+      .replace(/\s+/ig, "-")
+      .replace(/[^-a-z0-9]/ig, "")
   };
+
+  formatSeconds = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    let remainderSecs = Math.floor(seconds % 60);
+
+    if (remainderSecs < 10) {
+      remainderSecs = "0" + remainderSecs;
+    }
+
+    return `${mins}:${remainderSecs}`;
+  };
+
+  calculateNextSongPage = (songData, repeat) => {
+    const curPageIndex = SongList.findIndex(song => {
+      return song.title === songData.title;
+    });
+
+    if (curPageIndex === SongList.length - 1) {
+      if (repeat) {
+        return this.trackNameToPath(SongList[0].title);
+      } else {
+        return "/main"
+      }
+    } else {
+      return this.trackNameToPath(SongList[curPageIndex+1].title)
+    }
+  }
+  calculatePreviousSongPage = (songData, repeat) => {
+    const curPageIndex = SongList.findIndex(song => {
+      return song.title === songData.title;
+    });
+
+    if (curPageIndex === 0) {
+      if (repeat) {
+        return this.trackNameToPath(SongList[SongList.length - 1].title);
+      } else {
+        return "/main"
+      }
+    } else {
+      return this.trackNameToPath(SongList[curPageIndex-1].title)
+    }
+  }
 }
 
 const Utils = new UtilsApi();

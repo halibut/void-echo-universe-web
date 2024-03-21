@@ -2,7 +2,9 @@ import { useCallback, useEffect, useRef } from "react";
 import Constants from "../constants";
 import SoundService from "../service/SoundService";
 import SongData from "../service/SongData";
+import AudioControls from "../components/AudioControls";
 import { setLocation } from "../contexts/location-context";
+import { setBackgroundImage } from "../service/BackgroundService";
 
 const Title = ({fullyLoaded}) => {
     const nextRequested = useRef(false);
@@ -32,7 +34,20 @@ const Title = ({fullyLoaded}) => {
     }, [next, fullyLoaded]);
 
     useEffect(() => {
-        SoundService.setSound(SongData.track00.songSources, {play:true, loop:true});
+        SoundService.setSound(SongData.track00.songSources, {play:true, loop:true, fadeOutBeforePlay: 2});
+  
+        setBackgroundImage(require("../images/chapter_00_bg.jpg"), {
+            staticStyle: {opacity: 0.3, transform:`scale(3)`},
+            imageClass: "spin-bg-slow",
+            transitionTime: 3000,
+        });
+
+        return () => {
+            if (autoTimeout.current) {
+                window.clearTimeout(autoTimeout.current);
+                autoTimeout.current = null;
+            }
+        }
     }, []);
 
     return (
@@ -46,6 +61,7 @@ const Title = ({fullyLoaded}) => {
             </div>
                 
             <h2 className='author'>{Constants.artist}</h2>
+
         </div>
     );
 };

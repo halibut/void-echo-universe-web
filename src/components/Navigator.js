@@ -135,7 +135,7 @@ const Navigator = ({ screens, NotFoundPage }) => {
   }, [screens]);
 
   useEffect(() => {
-    if (location !== null) {
+    if (location && location.path !== null) {
       console.log("Got Navigation change: "+JSON.stringify(location));
       const {path, navOptions} = location;
       killTransition(path);
@@ -197,7 +197,7 @@ const Navigator = ({ screens, NotFoundPage }) => {
   }
 
   //Render the current component 
-  if (screenInd !== null) {
+  if (CurrentComp) {
     comps.push(
       <NavScreenContainer  key={screenInd}
         isLoadingOut={!!LoadingComp}
@@ -242,7 +242,6 @@ const Navigator = ({ screens, NotFoundPage }) => {
       <div
         className="row"
         style={{
-          height: 50,
           position: "absolute",
           left: 0,
           bottom: 0,

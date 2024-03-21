@@ -1,9 +1,14 @@
-import { useCallback, useEffect, useReducer, useRef} from "react";
+import { useCallback, useEffect, useRef, useState} from "react";
 import SoundService from "../service/SoundService";
 import State from "../service/State";
-import BackgroundService from "../service/BackgroundService";
 import Utils from "../utils/Utils";
-import NasaImagesApi from "../service/NasaImagesApi";
+import SlideShow from "../components/SlideShow";
+
+import SideMenu from "../components/SideMenu";
+
+import { IoIosPlay, IoIosSkipForward, IoIosSkipBackward, IoIosPause } from "react-icons/io";
+
+import { setLocation } from "../contexts/location-context";
 
 /**
  * Returns a component that is basically a wrapper around TrackPage, but with the specified songDat.
@@ -24,47 +29,6 @@ export function createTrackPage(songData) {
     }
 }
 
-
-function bgImageReducer(state, action){
-    if (action.type === "load-images") {
-        const songData = action.songData;
-
-        const imgData = songData.nasaImages.map(ni => {
-            const shuffledImages = ni.images.slice();
-            Utils.shuffleArray(shuffledImages);
-            return {
-                ...ni,
-                images: shuffledImages,
-            };
-        });
-
-        return {
-            songImages: imgData,
-            imageCategory: null,
-            imageIndex: null,
-        }
-    }
-    else if (action.type === "next-image") {
-        const songPos = action.songPosition ? action.songPosition : 0;
-        const {songImages, imageIndex} = state;
-
-        console.log("Song position: "+songPos);
-
-        let cat = 0;
-        while (cat < songImages.length-1 && songImages[cat].time >= songPos) {
-            cat++;
-        }
-
-        const newInd = imageIndex !== null ? imageIndex + 1 : 0;
-        
-        return {
-            songImages: songImages,
-            imageCategory: cat,
-            imageIndex: newInd,
-        };
-    }
-}
-
 const TrackPage = ({
     songData,
     isLoadingOut,
@@ -72,107 +36,247 @@ const TrackPage = ({
     fullyLoaded,
     isLoadingIn,
 }) => {
-    const [state, dispatch] = useReducer(bgImageReducer, {songImages:[], imageCategory:null, imageIndex:null});
-    
-    const soundRef = useRef(null);
-    const nextImgTimeout = useRef(null);
+    const [zenMode, setZenMode] = useState(State.getStateValue("zen-mode", false));
+    const [showNotes, setShowNotes] = useState(State.getStateValue("show-notes", true));
+    const [showControls, setShowControls] = useState(false);
+    const [paused, setPaused] = useState(false);
+    const [fadingControls, setFadingControls] = useState(false);
 
-    const {songImages, imageCategory, imageIndex} = state;
+    const [sound, setSound] = useState(null);
+    const soundRef = useRef(sound);
 
-    //When component loads, load our images and display whatever is first (next-image)
+    const controlsTimeoutRef = useRef(null);
+    const fadeoutControlsRef = useRef(null);
+
     useEffect(() => {
-        dispatch({type: "load-images", songData});
-        dispatch({type: "next-image", songPosition:0});
+        const audioElm = SoundService.getAudioElement()
+        setSound(audioElm);
 
-        //Subscribe to changes in the sound element so that we can get the song position 
-        //when we need it
-        const soundSub = SoundService.addSoundSubscriber((soundElement) => {
-            soundRef.current = soundElement;
+        const soundSub = SoundService.addSoundSubscriber((s) => {
+            setSound(s);
         });
-        
+
         return () => {
-            //unsubscribe from sound element updates
             soundSub.unsubscribe();
-
-            //Clean up any next image timeout we might have
-            if (nextImgTimeout.current) {
-                window.clearTimeout(nextImgTimeout.current);
-                nextImgTimeout.current = null;
-            }
-        }
-    }, [songData])
-
-    const showNextImage = useCallback(async (nasaId, slideTimeMillis) => {
-        const quality = State.getImageQuality();
-
-        const imageURLsResult = await NasaImagesApi.getImageURLs(nasaId);
-
-        if (imageURLsResult) {
-            let imgURL = imageURLsResult[quality];
-
-            //Set a transition time (fade-in time) proportional to the slide time
-            const transTime = Math.max(1000, Math.floor(slideTimeMillis * .2));
-
-            //Set an animaiton time (img-zoom-pan) a little longer than the slide time, so nothing ever stops moving
-            const animTime = Math.floor(slideTimeMillis * 1.25);
-            
-            BackgroundService.setBgImage(imgURL, {
-                transitionTime: transTime,
-                imageClass: "img-zoom-pan",
-                imageStyle:{
-                    animationDuration: `${animTime}ms`,
-                },
-                imageCSSProps:{
-                    '--bg-final-x': (Math.random()*30 - 15)+"%",
-                    '--bg-final-y': (Math.random()*30 - 15)+"%",
-                    '--bg-final-zoom': (Math.random()*2 + 1),
-                },
-            });
+            setSound(null);
         }
     }, []);
 
     useEffect(() => {
-        //songImages, and showNextImage should never change,
-        //so if any other state changes, this will tell the
-        //BackgroundService to display the next image.
-        //
-        //We do not show any images if the page is loading out
-        if (songImages && songImages.length > 0 && !isLoadingOut && imageCategory !== null && imageIndex !== null) {
-            const categoryData = songImages[imageCategory];
-            const imageSet = categoryData.images;
+        const stateSub = State.subscribeToStateChanges((stateEvent) => {
+            switch (stateEvent.state) {
+                case "show-notes":
+                    setShowNotes(stateEvent.value);
+                    break;
+                case "zen-mode":
+                    setZenMode(stateEvent.value);
+                    break; 
+                default:
+                    break;
+            }
+        });
 
-            //Calculate the number of miliseconds to display the image
-            //Note slideTime from the image set is in seconds
-            const slideTimeMillis = Math.max(5000, categoryData.slideTime * 1000);
-
-            //Determine the image to display
-            const toDisplayId = imageSet[imageIndex % imageSet.length];
-
-            showNextImage(toDisplayId, slideTimeMillis);
-
-            //Set a timer to display the next image after some time.
-            nextImgTimeout.current = window.setTimeout(() => {
-                const songPosition = soundRef.current ? soundRef.current.currentTime : 0;
-                dispatch({type: "next-image", songPosition:songPosition});
-            }, slideTimeMillis);
+        return () => {
+            stateSub.unsubscribe();
         }
-    }, [imageCategory, imageIndex, isLoadingOut, songImages, showNextImage])
+    }, []);
 
     useEffect(() => {
-        if (isLoadingOut) {
-            SoundService.setSound(null);
-        }
-        else if (fullyLoaded) {
-            State.setCurrentTrack(songData.trackNumber);
-            console.log("Setting sound: " + JSON.stringify(songData.title));
-            SoundService.setSound(songData.songSources, {play:true});
-        }
-        
-    }, [songData, fullyLoaded, isLoadingOut]);
+        return () => {
+            if (controlsTimeoutRef.current) {
+                window.clearTimeout(controlsTimeoutRef.current);
+                controlsTimeoutRef.current = null;
+            }
+            if (fadeoutControlsRef.current) {
+                window.clearTimeout(fadeoutControlsRef.current);
+                fadeoutControlsRef.current = null;
+            }
+        };
+    }, []);
 
+    const startHidingControls = useCallback((time) => {
+        if (controlsTimeoutRef.current) {
+            window.clearTimeout(controlsTimeoutRef.current);
+            controlsTimeoutRef.current = null;
+        }
+
+        setFadingControls(false);
+
+        const hideControlsFunc = () => {
+            controlsTimeoutRef.current = null;
+            setFadingControls(true);
+            fadeoutControlsRef.current = window.setTimeout(() => {
+                fadeoutControlsRef.current = null;
+                setShowControls(false);
+                State.setStateValue("audio-controls-expanded", false);
+            }, 250);
+        };
+
+        if (time > 0) {
+            controlsTimeoutRef.current = window.setTimeout(hideControlsFunc, time);
+        } else {
+            hideControlsFunc();
+        }
+
+    }, []);
+
+    const goToPrevious = useCallback((e) => {
+        if (e) {
+            e.stopPropagation();
+            e.preventDefault();
+        }
+        const prevURL = Utils.calculatePreviousSongPage(songData, false);
+        setLocation(prevURL);
+    }, [songData]);
+
+    const goToNext = useCallback((e) => {
+        if (e) {
+            e.stopPropagation();
+            e.preventDefault();
+        }
+        const nextURL = Utils.calculateNextSongPage(songData, false);
+        setLocation(nextURL);
+    }, [songData]);
+
+    const handlePaused = useCallback(() => {
+        setPaused(true);
+        if (controlsTimeoutRef.current) {
+            window.clearTimeout(controlsTimeoutRef.current);
+            controlsTimeoutRef.current = null;
+        }
+        setShowControls(true);
+    }, []);
+
+    const handlePlayed = useCallback(() => {
+        setPaused(false);
+    }, []);
+
+    const handleEnded = useCallback(() => {
+        if (State.getStateValue("repeat", "none") === "track") {
+            if (soundRef.current) {
+                soundRef.current.currentTime = 0;
+                soundRef.current.play();
+            }
+        } else {
+            goToNext();
+        }
+    }, [goToNext]);
+
+    useEffect(() => {
+        const oldSound = soundRef.current;
+        soundRef.current = sound;
+
+        if (sound !== oldSound) {
+            if (oldSound) {
+                oldSound.removeEventListener("pause", handlePaused);
+                oldSound.removeEventListener("play", handlePlayed);
+                oldSound.removeEventListener("ended", handleEnded);
+            }
+
+            if (sound) {
+                sound.addEventListener("pause", handlePaused);
+                sound.addEventListener("play", handlePlayed);
+                sound.addEventListener("ended", handleEnded);
+
+                if (sound.paused || SoundService.isSuspended()) {
+                    setPaused(true);
+                }
+            }
+        }
+    }, [sound, handlePaused, handlePlayed]);
+    
+    const togglePause = useCallback((e) => {
+        e.stopPropagation();
+        if (SoundService.isSuspended()) {
+            SoundService.tryResume();
+            if (sound) {
+                sound.play();
+                startHidingControls(0);
+            }
+            return;
+        }
+
+        if (sound) {
+            if (sound.paused) {
+                sound.play();
+                startHidingControls(0);
+            } else {
+                sound.pause();
+            }
+        }
+    }, [sound, startHidingControls]);
+
+    const toggleControls = useCallback((e) => {
+        e.stopPropagation();
+        if (!showControls) {
+            State.setStateValue("audio-controls-expanded", true)
+            setShowControls(true);
+            startHidingControls(1000000);
+        } else {
+            startHidingControls(0);
+        }
+    }, [showControls, startHidingControls]);
+
+    let songText = null;
+    if (!zenMode) {
+        let albumNotes = null;
+        if (showNotes) {
+            const paragraphs = songData.notes.split("\n").map((paragraph, ind) => {
+                return (
+                    <p key={ind}>{paragraph}</p>
+                )  
+            });
+
+            albumNotes = (
+                <div className="album-notes">
+                    {paragraphs}
+                </div>
+            )
+        }
+
+        songText = (
+            <div className="song-info" style={{}}>
+                <h1>{songData.title}</h1>
+                {albumNotes}
+            </div>
+        );
+    }
 
     return (
-        null
+        <div className='center' style={{flex:1, width:'100%', paddingBottom:50, position:'relative'}}>
+            { !isLoadingOut && (
+                <SlideShow key={songData.title} songData={songData} />
+            )}
+
+            <div className="col" style={{position:"absolute", left:0, top:0, width:"100%", height:"100%", cursor:"pointer"}} onClick={toggleControls} ></div>
+
+            {songText}
+
+            { (showControls) && (
+                <div key="controls" className={"track-controls "+ (fadingControls ? "fade-out" : "fade-in")} style={{animationDuration:"250ms"}} onClick={toggleControls}>
+                    <div className="row" style={{width: "100%", maxWidth: 800, justifyContent:"space-around"}}>
+                        <button type="button" onClick={goToPrevious}>
+                            <IoIosSkipBackward style={{width:"1em", height:"1em"}} />
+                        </button>
+                        <button type="button" onClick={togglePause}>
+                            {paused ? (
+                                <IoIosPlay style={{width:"2em", height:"2em"}} />
+                            ) : (
+                                <IoIosPause style={{width:"2em", height:"2em"}} />
+                            )}
+                        </button>
+                        <button type="button" onClick={goToNext}>
+                            <IoIosSkipForward style={{width:"1em", height:"1em"}} />
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            {fullyLoaded && (
+                <SideMenu songData={songData} />
+            )}
+
+        </div>
     );
 }
 

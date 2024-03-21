@@ -8,8 +8,11 @@ import {
 } from "react-icons/io5";
 
 import SoundService from "../service/SoundService";
+import Utils from "../utils/Utils";
+import Sound from "./Sound";
+import State from "../service/State";
 
-const VolumeControl = ({}) => {
+const VolumeControl = ({uiExpanded}) => {
   const [muted, setMuted] = useState(SoundService.isMuted());
   const [vol, setVol] = useState(SoundService.getVolume());
   const [expanded, setExpanded] = useState(false);
@@ -53,7 +56,7 @@ const VolumeControl = ({}) => {
   }
 
   let volKnob = null;
-  if (expanded && !muted) {
+  if ((uiExpanded || expanded) && !muted) {
     volKnob = (
       <div className="volume-knob">
         <input
@@ -84,10 +87,10 @@ const VolumeControl = ({}) => {
   );
 };
 
-const PositionControl = ({ sound, onPositionChange}) => {
+const PositionControl = ({ sound, uiExpanded}) => {
   const [expanded, setExpanded] = useState(false);
   const [pos, setPos] = useState(0);
-  const [time, setTime] = useState(null);
+  const [hoverTime, setHoverTime] = useState(null);
   const updateRef = useRef(null);
 
   const updatePos = useCallback(() => {
@@ -112,7 +115,7 @@ const PositionControl = ({ sound, onPositionChange}) => {
 
   const onLeave = useCallback((e) => {
     setExpanded(false);
-    setTime(null);
+    setHoverTime(null);
   }, []);
 
   const handleMouseMove = useCallback((e) => {
@@ -123,15 +126,8 @@ const PositionControl = ({ sound, onPositionChange}) => {
     const ratio = xPos / divWidth;
     const secs = Math.floor(sound.duration * ratio);
 
-    const mins = Math.floor(secs / 60);
-    let remainderSecs = secs % 60;
-
-    if (remainderSecs < 10) {
-      remainderSecs = "0" + remainderSecs;
-    }
-
-    setTime({
-      time: "" + mins + ":" + remainderSecs,
+    setHoverTime({
+      time: Utils.formatSeconds(secs),
       x: xPos,
       w: divWidth,
     });
@@ -145,40 +141,62 @@ const PositionControl = ({ sound, onPositionChange}) => {
     const ratio = xPos / divWidth;
 
     sound.currentTime = sound.duration * ratio;
-
-    if (onPositionChange) {
-      onPositionChange(sound.currentTime);
-    }
-  }, [sound, onPositionChange]);
+  }, [sound]);
 
   if (!sound) {
     return null;
   } else {
-    let timeText = null;
-    if (expanded && time) {
-      const tStyle = {
-        position: "absolute",
-        backgroundColor: "#0008",
-        borderRadius: 10,
-        padding:5,
-        color: "#fff",
-        fontSize: 20,
-      };
+    let hoverTimeText = null;
+    let posTimeText = null;
+    if (expanded || uiExpanded) {
+      if (pos !== null) {
+        const songPercent = pos / sound.duration;
 
-      const toRightDist = time.w - time.x;
-      if (time.x < 100) {
-        tStyle.left = time.x + 5;
-      } else {
-        tStyle.right = toRightDist + 5;
+        const tStyle={
+          backgroundColor: "transparent",
+          fontSize: 20,
+          position: "absolute",
+        }
+
+        if (songPercent < .2) {
+          tStyle.color = "#000";
+          tStyle.left = "100%";
+          tStyle.paddingLeft = 5;
+        } else {
+          tStyle.color = "#333";
+          tStyle.right = "0%";
+          tStyle.paddingRight = 5;
+        }
+        posTimeText = <span style={tStyle}>{Utils.formatSeconds(pos)}</span>;
       }
+      if (hoverTime) {
+        const tStyle = {
+          position: "absolute",
+          backgroundColor: "#0008",
+          borderRadius: 3,
+          padding:2,
+          paddingLeft: 5,
+          paddingRight: 5,
+          color: "#fff",
+          fontSize: 20,
+          bottom: 0,
+        };
 
-      timeText = <span style={tStyle}>{time.time}</span>;
+        const toRightDist = hoverTime.w - hoverTime.x;
+        if (hoverTime.x < 100) {
+          tStyle.left = hoverTime.x + 5;
+        } else {
+          tStyle.right = toRightDist + 5;
+        }
+
+        hoverTimeText = <span style={tStyle}>{hoverTime.time}</span>;
+      }
     }
 
     return (
       <div
         className="position-control"
-        onClick={handleSeekChange}
+        onMouseDown={handleSeekChange}
         onMouseMove={handleMouseMove}
         onMouseLeave={onLeave}
         onMouseEnter={onEnter}
@@ -187,22 +205,21 @@ const PositionControl = ({ sound, onPositionChange}) => {
           <div
             className="position-indicator"
             style={{ width: `${100 * (pos / sound.duration)}%` }}
-          />
+          >
+            {posTimeText}
+          </div>
         </div>
 
-        {timeText}
+        {hoverTimeText}
       </div>
     );
   }
 };
 
 const AudioControls = ({
-  onPause,
-  onPlay,
-  onNext,
-  onPrev,
-  onPositionChange,
+
 }) => {
+  const [expanded, setExpanded] = useState(State.getStateValue("audio-controls-expanded", false));
 
   const [sound, setSound] = useState(null);
 
@@ -214,12 +231,42 @@ const AudioControls = ({
     }
   }, []);
 
+  useEffect(() => {
+    const sub = State.subscribeToStateChanges((e) => {
+      if (e.state === "audio-controls-expanded") {
+        setExpanded(e.value);
+      }
+    });
+
+    return () => {
+      sub.unsubscribe();
+    }
+  }, []);
+
+  const expandControls = useCallback((e) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+
+    setExpanded(true);
+  }, []);
+
+  const shrinkControls = useCallback((e) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+
+    setExpanded(false);
+  }, []);
+
   return (
-    <div className="audio-controls">
+    <div className={"audio-controls " + (expanded ? "expanded" : "")} onMouseEnter={expandControls} onMouseLeave={shrinkControls}>
       <div className="row" style={{ flex: 1, height: "100%", alignItems:'flex-end' }}>
-        {sound && <PositionControl sound={sound} onPositionChange={onPositionChange} />}
+        {sound && <PositionControl sound={sound} uiExpanded={expanded} />}
       </div>
-      <VolumeControl />
+      <VolumeControl uiExpanded={expanded} />
     </div>
   );
 };

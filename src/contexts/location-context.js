@@ -60,7 +60,7 @@ class LocationServiceCls {
         this.onPathChanged = pathChangeHandler;
         window.onpopstate = this.handleLocation;
 
-        this.handleLocation();
+        this.handleLocation({time:0});
     };
 }
 

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useReducer, useRef, useState } from "react";
+import { useCallback, useEffect, useReducer, useRef} from "react";
 
 import BackgroundService from "../service/BackgroundService";
 
@@ -25,7 +25,7 @@ const ImgContainer = ({imgSrc, options, isLoadingIn}) => {
     }
 
     return (
-        <div className={'bg-image '+outerClass} style={outerStyle}>
+        <div className={'bg-image-container '+outerClass} style={outerStyle}>
             <img ref={setRef} className={'bg-image '+imageClass} style={imageStyle} src={imgSrc} alt="" />
         </div>
     )
@@ -40,6 +40,13 @@ function bgReducer(state, action) {
         const newImg = action.img;
 
         const opts = newImg.options ? newImg.options : {};
+
+        if (bgImage !== null && newImg.src === bgImage.src) {
+            if (!opts.forceReplace) {
+                return state;
+            }
+        }
+        
         const transTime = opts.transitionTime ? opts.transitionTime : 0;
 
         const img = {
@@ -62,10 +69,15 @@ function bgReducer(state, action) {
         }
     }
     else if (action.type === "endAnim") {
-        return {
-            bgImage: loadingImage,
-            loadingImage: null,
-        };
+        if (loadingImage) {
+            return {
+                bgImage: loadingImage,
+                loadingImage: null,
+            };
+        } else {
+            return state;
+        }
+        
     }
     else if (action.type === "clear") {
         return {

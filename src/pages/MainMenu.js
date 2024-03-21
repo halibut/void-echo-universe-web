@@ -4,6 +4,9 @@ import SoundService from "../service/SoundService";
 import SongData from "../service/SongData";
 import Link from "../components/Link";
 import Utils from "../utils/Utils";
+import { setBackgroundImage } from "../service/BackgroundService";
+import SideMenu from "../components/SideMenu";
+import AudioControls from "../components/AudioControls";
 
 
 const TrackItem = ({songData, selected}) => {
@@ -21,122 +24,56 @@ const TrackItem = ({songData, selected}) => {
     </Link>
   )
 }
-  
-  const OptionItem = ({optKey, defaultVal, title}) => {
-    const [keyVal, setKeyVal] = useState(State.getStateValue(optKey, defaultVal));
-  
-    useEffect(() => {
-      const optSub = State.subscribeToStateChanges((stateEvent) => {
-        if(stateEvent.state === optKey) {
-          setKeyVal(stateEvent.value);
-        }
-      })
-  
-      return () => {
-        optSub.unsubscribe();
-      }
-    });
-  
-    const toggle = () => {
-      State.setStateValue(optKey, !keyVal);
-    }
-    
-    return (
-      <div className='option-item' onClick={toggle} style={{color: "#ddd"}}>
-        <div className='option-title'>{title}</div>
-        <div className='option-value'>
-          {keyVal===true && ( 
-            <div className='' style={{width:10, height:10, backgroundColor:"#ddd", borderRadius:5}} />
-          )}
-        </div>
-      </div>
-    )
-  };
-  
-  const MultiOptionItem = ({optKey, options, defaultVal, title}) => {
-    const [keyVal, setKeyVal] = useState(State.getStateValue(optKey, defaultVal));
-  
-    useEffect(() => {
-      const optSub = State.subscribeToStateChanges((stateEvent) => {
-        if(stateEvent.state === optKey) {
-          setKeyVal(stateEvent.value);
-        }
-      })
-  
-      return () => {
-        optSub.unsubscribe();
-      }
-    });
-  
-    const select = (e) => {
-      State.setStateValue(optKey, e.target.value);
-    }
-    
-    return (
-      <div className='option-item' style={{color: "#ddd"}}>
-        <div className='option-title'>{title}</div>
-        <div>
-          <select value={keyVal} onChange={select}>
-            {options.map(opt => {
-              return <option key={opt.value} value={opt.value}>{opt.label}</option>
-            })}
-          </select>
-        </div>
-      </div>
-    )
-  };
-  
-  const MainMenu = ({isLoadingOut, isLoadingIn}) => {
-    const [currentTrack, setCurrentTrack] = useState(State.getCurrentTrack());
-  
-    useEffect(() => {
-      const trackSub = State.subscribeToStateChanges((stateEvent) => {
-        if(stateEvent.state === "currentTrack") {
-          setCurrentTrack(stateEvent.value);
-        }
-      })
-  
-      return () => {
-        trackSub.unsubscribe();
-      }
-    }, []);
 
-    useEffect(() => {
-      if (isLoadingIn) {
-        SoundService.setSound(SongData.track00.songSources, {play:true, loop:true});
+const MainMenu = ({isLoadingOut, isLoadingIn, fullyLoaded}) => {
+  const [currentTrack, setCurrentTrack] = useState(State.getCurrentTrack());
+
+  useEffect(() => {
+    setBackgroundImage(require("../images/chapter_00_bg.jpg"), {
+      staticStyle: {opacity: 0.3, transform:`scale(3)`},
+      imageClass: "spin-bg-slow",
+      transitionTime: 3000,
+    });
+
+    const trackSub = State.subscribeToStateChanges((stateEvent) => {
+      if(stateEvent.state === "currentTrack") {
+        setCurrentTrack(stateEvent.value);
       }
-      if (isLoadingOut) {
-        SoundService.setSound(null);
-      }
-    }, [isLoadingIn, isLoadingOut]);
+    });
+
+    SoundService.setSound(SongData.track00.songSources, {play:true, loop:true, fadeOutBeforePlay: 2});
+
+    return () => {
+      trackSub.unsubscribe();
+    }
+  }, []);
+
   
-    return (
-      <div className='center' style={{flex:1, width:'100%', paddingBottom:50, overflowY: 'auto'}}>
-        <div className='' style={{position:'relative', width:'100%', maxWidth: 600}}>
-          <h1 className='title'>Tracks</h1>
-          <TrackItem songData={SongData.track01} selected={1===currentTrack}/>
-          <TrackItem songData={SongData.track02} selected={2===currentTrack}/>
-          <TrackItem songData={SongData.track03} selected={3===currentTrack}/>
-          <TrackItem songData={SongData.track04} selected={4===currentTrack}/>
-          <TrackItem songData={SongData.track05} selected={5===currentTrack}/>
-          <TrackItem songData={SongData.track06} selected={6===currentTrack}/>
-          <TrackItem songData={SongData.track07} selected={7===currentTrack}/>
-          <TrackItem songData={SongData.track08} selected={8===currentTrack}/>
-          <TrackItem songData={SongData.track09} selected={9===currentTrack}/>
-          <TrackItem songData={SongData.track10} selected={10===currentTrack}/>
-          <TrackItem songData={SongData.track11} selected={11===currentTrack}/>
-        </div>
-  
-        <div className='' style={{position:'relative', width:'100%', maxWidth: 400}}>
-          <h2 className='title'>Options</h2>
-          <OptionItem optKey='show-notes' title='Album Notes' defaultVal={true}/>
-          <OptionItem optKey='show-visuals' title='Vizualizations' defaultVal={true}/>
-          <MultiOptionItem optKey='img-quality' title='Image Quality' options={[{value:'orig', label:'Highest'}, {value:'large', label:'High'}, {value:'medium', label:'Medium'}, {value:'small', label:'Small'},]} defaultVal={'large'}/>
-        </div>
-        
+  return (
+    <div className='center' style={{flex:1, width:'100%', paddingBottom:50, overflowY: 'auto', position:'relative'}}>
+      <div className='' style={{position:'relative', width:'100%', maxWidth: 600}}>
+        <h1 className='title'>Tracks</h1>
+        <TrackItem songData={SongData.track01} selected={1===currentTrack}/>
+        <TrackItem songData={SongData.track02} selected={2===currentTrack}/>
+        <TrackItem songData={SongData.track03} selected={3===currentTrack}/>
+        <TrackItem songData={SongData.track04} selected={4===currentTrack}/>
+        <TrackItem songData={SongData.track05} selected={5===currentTrack}/>
+        <TrackItem songData={SongData.track06} selected={6===currentTrack}/>
+        <TrackItem songData={SongData.track07} selected={7===currentTrack}/>
+        <TrackItem songData={SongData.track08} selected={8===currentTrack}/>
+        <TrackItem songData={SongData.track09} selected={9===currentTrack}/>
+        <TrackItem songData={SongData.track10} selected={10===currentTrack}/>
+        <TrackItem songData={SongData.track11} selected={11===currentTrack}/>
+        <TrackItem songData={SongData.track12} selected={12===currentTrack}/>
       </div>
-    );
-  };
+
+      {fullyLoaded && (
+        <SideMenu />
+      )}
+      
+    </div>
+  );
+};
 
 
 export default MainMenu;

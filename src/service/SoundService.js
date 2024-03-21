@@ -24,6 +24,7 @@ class SoundServiceCls {
         this.sound = null;
         this.soundSrc = null;
         this.soundOptions = {};
+        this.element = null;
         this.init();
     }
 
@@ -102,31 +103,61 @@ class SoundServiceCls {
         }
     }
 
-    setSound = (source, options) => {
+    /**
+     * 
+     * @param {*} source 
+     * @param {*} options list of optional parameters:
+     *   loop: true/false (loop the song - default is false)
+     *   play: true/false (play the song automatically - default is false)
+     *   fadeOutBeforePlay: n (seconds to fade out existing sound before starting new sound)
+     * @returns 
+     */
+    setSound = async (source, options) => {
+        await this.tryResume();
+
         if (this.soundSrc === source) {
             console.log("Same sound requested.");
             return;
         }
 
-        this.soundSrc = source;
-        this.soundOptions = options;
-        if (this.audioChangeHandler) {
-            this.audioChangeHandler({src:source, options});
+        const playNewSong = () => {
+            this.soundSrc = source;
+            this.soundOptions = options;
+            if (this.audioChangeHandler) {
+                this.audioChangeHandler({src:source, options});
+            }
+            else {
+                console.warn("No audioChangeHandler set.");
+            }
+        }
+
+        if (options?.fadeOutBeforePlay && options.fadeOutBeforePlay > 0) {
+            this.fadeOut(options.fadeOutBeforePlay);
+            window.setTimeout(playNewSong, (1000 * options.fadeOutBeforePlay)+50);
         }
         else {
-            console.warn("No audioChangeHandler set.");
+            playNewSong();
         }
     };
 
     loadFromAudioElement = (element) => {
         const source = this.ac.createMediaElementSource(element);
-
+        
         source.connect(this.mediaTargetNode);
 
+        this.element = element;
         this.soundSubscribers.notifySubscribers(element);
 
         return source;
     };
+
+    /**
+    * Return the current audio element
+    * @returns 
+    */
+    getAudioElement = () => {
+        return this.element;
+    }
 
     getFFTData = () => {
         this.fftNode.getByteFrequencyData(this.fftBuffer);
@@ -142,16 +173,21 @@ class SoundServiceCls {
         //This cancels any previous event and then schedules a new event to change the volume within .1 seconds
         //We do this to prevent popping/clicking sounds
         this.gainNode.gain.cancelScheduledValues(this.ac.currentTime);
-        this.gainNode.gain.setValueAtTime(this.gainNode.gain.value, this.ac.currentTime);
+        this.gainNode.gain.setValueAtTime(this.gainNode.gain.value, 0);
         this.gainNode.gain.linearRampToValueAtTime(Math.max(0, Math.min(vol, 1)), this.ac.currentTime + 0.1);
         State.setLastVolume(vol);
     }
 
-    fadeOut = (targetTime) => {
+    /**
+     * Fade out sound over the specified time
+     * @param {*} fadeDuration time in seconds
+     */
+    fadeOut = (fadeDuration) => {
         //linear ramp starts at the time of the last event, so we need to create an event
         //first that sets the current gain to its existing value at the current time.
-        this.gainNode.gain.setValueAtTime(this.gainNode.gain.value, this.ac.currentTime);
-        this.gainNode.gain.linearRampToValueAtTime(0.0, this.ac.currentTime + targetTime);
+        this.gainNode.gain.cancelScheduledValues(this.ac.currentTime);
+        this.gainNode.gain.setValueAtTime(this.gainNode.gain.value, 0);
+        this.gainNode.gain.linearRampToValueAtTime(0.0, this.ac.currentTime + fadeDuration);
     }
 
     setMuted = (muted) => {
@@ -159,11 +195,11 @@ class SoundServiceCls {
             if (this.isSuspended()) {
                 this.tryResume();
             }
-            this.gainNode.gain.setValueAtTime(this.gainNode.gain.value, this.ac.currentTime);
+            this.gainNode.gain.setValueAtTime(this.gainNode.gain.value, 0);
             this.gainNode.gain.linearRampToValueAtTime(0, this.ac.currentTime + 0.1);
         }
         else {
-            this.gainNode.gain.setValueAtTime(0, this.ac.currentTime);
+            this.gainNode.gain.setValueAtTime(0, 0);
             this.gainNode.gain.linearRampToValueAtTime(State.getLastVolume(), this.ac.currentTime + 0.1);
         }
         State.setMuted(muted);

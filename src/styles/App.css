@@ -1,5 +1,34 @@
+html {
+    width: 100%;
+    /*height: 100%;*/
+    height: 100vh;
+    height: -webkit-fill-available;
+    padding: 0px;
+    margin: 0px;
+    background-color: #000;
+}
+
 body {
+    width: 100%;
+    /*height: 100%;*/
+    min-height: 100vh;
+    min-height: fill-available;
+    min-height: -webkit-fill-available;
+    padding: 0px;
+    margin: 0px;
     font-family: 'Space Grotesk', sans-serif;
+    overflow: hidden;
+    background-color: #000;
+}
+
+#root {
+    position: absolute;
+    left: 0px;
+    right: 0px;
+    top: 0px;
+    bottom: 0px;
+    padding: 0px;
+    margin: 0px;
     overflow: hidden;
 }
 
@@ -36,16 +65,16 @@ div.justify-center {
     justify-content: center;
 }
 
-.root {
-    width: 100%;
-    height: 100%;
-}
+
 
 .main-nav {
-    width: 100%;
     flex: 1;
+    padding: 0px;
+    margin: 0px;
+    position: relative;
     background-color: #000;
-    min-height: 100vh;
+    width: 100%;
+    height: 100%;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -56,9 +85,11 @@ div.justify-center {
 }
 
 .nav-page {
-    flex: 1;
-    width: 100%;
-    height: 100%;
+    left: 0px;
+    right: 0px;
+    top: 0px;
+    bottom: 0px;
+    margin: 0px;
     overflow: hidden;
     display: flex;
     flex-direction: column;
@@ -82,6 +113,15 @@ div.justify-center {
     color: #61dafb;
 }
 
+.bg-image-container {
+    position: absolute;
+    left:0px;
+    top:0px;
+    right:0px;
+    bottom:0px;
+    overflow: hidden;
+}
+
 .bg-image {
     width: 100%;
     height: 100%;
@@ -89,6 +129,7 @@ div.justify-center {
     position: absolute;
     left:0;
     top:0;
+    overflow: hidden;
 }
 
 .darken {
@@ -115,18 +156,52 @@ div.justify-center {
   
 
 input[type="range"].vertical {
+    background: transparent;
+    -webkit-appearance: none;
+    appearance: none;
+    cursor: pointer;
     position: absolute;
     bottom: 0;
     right: 0;
     width: 50px;
-    height: 200px;
-    transform: rotate(270deg) translateX(-50px) translateY(20px) ;
+    height: 50px;
+    transform: rotate(270deg) translateX(25px) translateY(0px) ;
     color: "#ddd";
     background-color: "#ddd";
  }
 
+ input[type="range"].vertical::-webkit-slider-runnable-track {
+    background: #888;
+    height: 10px;
+    border-radius: 5px;
+ }
+
+ input[type="range"].vertical::-webkit-slider-thumb {
+    -webkit-appearance:none;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    background-color: #fff;
+    border-radius: 10px;
+    margin-top: -5px;
+ }
+
+ input[type="range"].vertical::-moz-range-track {
+    background: #888;
+    height: 10px;
+    border-radius: 5px;
+ }
+
+ input[type="range"].vertical::-moz-thumb {
+    border: none;
+    width: 20px;
+    height: 20px;
+    background-color: #fff;
+    border-radius: 10px;
+ }
+
 .audio-controls {
-    height: 100%;
+    height: 100px;
     flex: 1;
     flex-direction: row;
     align-items: flex-end;
@@ -136,30 +211,171 @@ input[type="range"].vertical {
 .volume-control {
     position: relative;
     width: 50px;
+    align-items: center;
 }
 
 .position-control {
     flex: 1;
-    height: 20px;
+    height: 60px;
     opacity: 0.5;
     position: relative;
     cursor: pointer;
 }
 
-.position-control:hover{
-    height: 30px;
+.audio-controls.expanded .position-control {
+    height: 100px;
     opacity: 1;
 }
 
 .position-background {
-    margin-top: 18px;
+    margin-top: 58px;
     width: 100%;
     height: 100%;
     background-color: #888;
 }
 
+.audio-controls.expanded .position-control .position-background {
+    margin-top: 70px;
+}
+
 .position-indicator {
+    position: relative;
     height: 100%;
     background-color: #fff;
+    border-top-right-radius: 2px;
+    border-bottom-right-radius: 2px;
+}
+
+
+.popup-menu-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    background-color: transparent;
+    padding: 5px;
+    border-width: 0px;
+    color: #fff;
+    font-size: 30px;
+    cursor: pointer;
+    width: 50px;
+    height: 50px;
+    border-radius: 25px;
+}
+
+.popup-menu-button.zen-mode {
+    color: #555;
+}
+
+.popup-menu-button:hover {
+    background-color: #333;
+}
+
+.popup-menu {
+    display: flex;
+    flex-direction: column;
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    background-color: #0005;
+    backdrop-filter: blur(10px);
+    padding: 10px;
+    padding-bottom: 5px;
+    padding-bottom: 5px;
+    border-radius: 10px;
+    max-width: 90%;
+    width: 450px;
+    max-height: 90%;
+    overflow-y: auto;
+}
+
+
+.popup-menu > div {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    padding-top: 3px;
+    padding-bottom: 3px;
+}
+
+.popup-menu > div.divider {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    margin-top: 10px;
+    margin-bottom: 10px;
+    border-bottom-width: 1px;
+    border-color: #555;
+    border-bottom-style: solid;
+}
+
+.popup-menu a {
+    margin-left: 1em;
+    font-size: .9em;
+}
+
+.close-menu-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 50px;
+    height: 50px;
+    background-color: transparent;
+    padding: 5px;
+    border-width: 0px;
+    color: #fff;
+    font-size: 30px;
+    cursor: pointer;
+    border-radius: 25px;
+}
+
+.close-menu-button:hover {
+    background-color: #555;
+}
+
+.popup-menu div a {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+
+.popup-menu div a span {
+    padding-left: 20px;
+}
+
+
+.track-controls {
+    display: flex;
+    flex-direction: column;
+    position: absolute;
+    top: 0px;
+    right: 0px;
+    width: 100%;
+    height: 100%;
+    background-color: #0005;
+    backdrop-filter: blur(5px);
+    overflow: hidden;
+    align-items: center;
+    justify-content: center;
+}
+
+.track-controls button {
+    border: none;
+    margin: 0px;
+    padding: 10px;
+    background-color: transparent;
+    font-size: 2em;
+    text-align: center;
+    color: #ddd;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.track-controls button:hover {
+    color: #fff;
+    cursor: pointer;
 }
 

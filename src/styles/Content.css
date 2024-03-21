@@ -5,6 +5,13 @@
     color: #fff;
 }
 
+h3.title {
+    font-size: 1.25em;
+    font-weight: bold;
+    text-align: center;
+    color: #fff;
+}
+
 .author {
     font-size: 2em;
     font-weight: bold;
@@ -81,6 +88,15 @@
     margin-left: 20px;
     margin-right: 20px;
 }
+.option-item select {
+    font-size: 1em;
+    background-color: #000;
+    color: #fff;
+}
+.option-item select option {
+    background-color: #000;
+    color: #fff;
+}
 .option-item:hover {
     font-weight: bold;
 }
@@ -97,3 +113,44 @@
     align-items: center;
     justify-content: center;    
 }
+
+.song-info {
+    position: absolute;
+    left: 10px;
+    top: 10px;
+    width: 600px;
+    max-width: 90%;
+    max-height: 80%;
+    background-color: #0005;
+    backdrop-filter: blur(10px);
+    padding-top: .5em;
+    padding-bottom: .5em;
+    border-radius: 1em;
+    scrollbar-width: 40px;
+}
+
+.song-info h1 {
+    margin-left: .5em;
+    margin-right: .5em;
+    margin-block-start: 0em;
+    margin-block-end: .5em;
+    font-size: 1.25em;
+    width: 100%;
+    text-align: center;
+}
+
+.album-notes {
+    direction: rtl;
+    overflow-y: auto;
+    scrollbar-color: #fff8 transparent;
+    padding-left: 1em;
+    padding-right: 1em;
+}
+
+.album-notes p {
+    direction: ltr;
+    margin-top: .5em;
+    margin-bottom: .5em;
+    font-size: calc(8px + .5em);
+}
+
