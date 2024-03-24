@@ -62,11 +62,6 @@ const SlideShow = ({songData}) => {
         const soundSub = SoundService.addSoundSubscriber((soundElement) => {
             soundRef.current = soundElement;
         });
-
-        //Play the song for this track
-        State.setCurrentTrack(songData.trackNumber);
-        //console.log("Setting sound: " + JSON.stringify(songData.title));
-        SoundService.setSound(songData.songSources, {play:true, fadeOutBeforePlay:2});
         
         return () => {
             //unsubscribe from sound element updates

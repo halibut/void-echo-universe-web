@@ -14,6 +14,7 @@ body {
     min-height: 100vh;
     min-height: fill-available;
     min-height: -webkit-fill-available;
+    min-height: stretch;
     padding: 0px;
     margin: 0px;
     font-family: 'Space Grotesk', sans-serif;

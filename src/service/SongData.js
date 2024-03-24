@@ -14,7 +14,6 @@ const SongData = {
     track00: {
         title: "",
         songSources: [
-            //{src: getSongURL("ambient.mp4"), type:"audio/mp4"},
             {src: getSongURL("ambient.mp3"), type:"audio/mpeg"},
             {src: getSongURL("ambient.ogg"), type:"audio/ogg"}
         ],
@@ -28,9 +27,8 @@ const SongData = {
     track01: {
         title: "The Big Bang",
         trackNumber: 1,
-        songLength: "3:45",
+        songLength: "6:44",
         songSources: [
-            //{src: getSongURL("01-the-big-bang.mp4"), type:"audio/mp4"},
             {src: getSongURL("01-the-big-bang.mp3"), type:"audio/mpeg"},
             {src: getSongURL("01-the-big-bang.ogg"), type:"audio/ogg"}
         ],
@@ -46,11 +44,10 @@ const SongData = {
     track02: {
         title: "Cosmic Microwave Background",
         trackNumber: 2,
-        songLength: "3:45",
+        songLength: "5:17",
         songSources: [
-            //{src: getSongURL("01-the-big-bang.mp4"), type:"audio/mp4"},
-            {src: getSongURL("01-the-big-bang.mp3"), type:"audio/mpeg"},
-            {src: getSongURL("01-the-big-bang.ogg"), type:"audio/ogg"}
+            {src: getSongURL("02-cosmic-microwave-background.mp3"), type:"audio/mpeg"},
+            {src: getSongURL("02-cosmic-microwave-background.ogg"), type:"audio/ogg"}
         ],
         notes: AlbumNotes.cmb,
         nasaImages: [
@@ -64,11 +61,10 @@ const SongData = {
     track03: {
         title: "Nebulae",
         trackNumber: 3,
-        songLength: "3:45",
+        songLength: "3:42",
         songSources: [
-            //{src: getSongURL("01-the-big-bang.mp4"), type:"audio/mp4"},
-            {src: getSongURL("01-the-big-bang.mp3"), type:"audio/mpeg"},
-            {src: getSongURL("01-the-big-bang.ogg"), type:"audio/ogg"}
+            {src: getSongURL("03-nebulae.mp3"), type:"audio/mpeg"},
+            {src: getSongURL("03-nebulae.ogg"), type:"audio/ogg"}
         ],
         notes: AlbumNotes.nebulae,
         nasaImages: [
@@ -82,11 +78,10 @@ const SongData = {
     track04: {
         title: "Abiogenesis",
         trackNumber: 4,
-        songLength: "3:45",
+        songLength: "4:16",
         songSources: [
-            //{src: getSongURL("01-the-big-bang.mp4"), type:"audio/mp4"},
-            {src: getSongURL("01-the-big-bang.mp3"), type:"audio/mpeg"},
-            {src: getSongURL("01-the-big-bang.ogg"), type:"audio/ogg"}
+            {src: getSongURL("04-abiogenesis.mp3"), type:"audio/mpeg"},
+            {src: getSongURL("04-abiogenesis.ogg"), type:"audio/ogg"}
         ],
         notes: AlbumNotes.abiogenesis,
         nasaImages: [
@@ -102,11 +97,10 @@ const SongData = {
     track05: {
         title: "Canopies",
         trackNumber: 5,
-        songLength: "3:45",
+        songLength: "0:55",
         songSources: [
-            //{src: getSongURL("01-the-big-bang.mp4"), type:"audio/mp4"},
-            {src: getSongURL("01-the-big-bang.mp3"), type:"audio/mpeg"},
-            {src: getSongURL("01-the-big-bang.ogg"), type:"audio/ogg"}
+            {src: getSongURL("05-canopies.mp3"), type:"audio/mpeg"},
+            {src: getSongURL("05-canopies.ogg"), type:"audio/ogg"}
         ],
         notes: "",
         nasaImages: [
@@ -120,11 +114,10 @@ const SongData = {
     track06: {
         title: "Sapience (Void Echo)",
         trackNumber: 6,
-        songLength: "3:45",
+        songLength: "5:12",
         songSources: [
-            //{src: getSongURL("01-the-big-bang.mp4"), type:"audio/mp4"},
-            {src: getSongURL("01-the-big-bang.mp3"), type:"audio/mpeg"},
-            {src: getSongURL("01-the-big-bang.ogg"), type:"audio/ogg"}
+            {src: getSongURL("06-sapience.mp3"), type:"audio/mpeg"},
+            {src: getSongURL("06-sapience.ogg"), type:"audio/ogg"}
         ],
         notes: AlbumNotes.sapience,
         nasaImages: [
@@ -140,11 +133,10 @@ const SongData = {
     track07: {
         title: "The Relentless March of Time",
         trackNumber: 7,
-        songLength: "3:45",
+        songLength: "5:43",
         songSources: [
-            //{src: getSongURL("01-the-big-bang.mp4"), type:"audio/mp4"},
-            {src: getSongURL("01-the-big-bang.mp3"), type:"audio/mpeg"},
-            {src: getSongURL("01-the-big-bang.ogg"), type:"audio/ogg"}
+            {src: getSongURL("07-relentless-march-of-time.mp3"), type:"audio/mpeg"},
+            {src: getSongURL("07-relentless-march-of-time.ogg"), type:"audio/ogg"}
         ],
         notes: AlbumNotes.relentlessMarch,
         nasaImages: [
@@ -158,11 +150,10 @@ const SongData = {
     track08: {
         title: "Red Shift",
         trackNumber: 8,
-        songLength: "3:45",
+        songLength: "3:35",
         songSources: [
-            //{src: getSongURL("01-the-big-bang.mp4"), type:"audio/mp4"},
-            {src: getSongURL("01-the-big-bang.mp3"), type:"audio/mpeg"},
-            {src: getSongURL("01-the-big-bang.ogg"), type:"audio/ogg"}
+            {src: getSongURL("08-red-shift.mp3"), type:"audio/mpeg"},
+            {src: getSongURL("08-red-shift.ogg"), type:"audio/ogg"}
         ],
         notes: AlbumNotes.redShift,
         nasaImages: [
@@ -176,11 +167,10 @@ const SongData = {
     track09: {
         title: "Collapsing Star",
         trackNumber: 9,
-        songLength: "3:45",
+        songLength: "4:32",
         songSources: [
-            //{src: getSongURL("01-the-big-bang.mp4"), type:"audio/mp4"},
-            {src: getSongURL("01-the-big-bang.mp3"), type:"audio/mpeg"},
-            {src: getSongURL("01-the-big-bang.ogg"), type:"audio/ogg"}
+            {src: getSongURL("09-collapsing-star.mp3"), type:"audio/mpeg"},
+            {src: getSongURL("09-collapsing-star.ogg"), type:"audio/ogg"}
         ],
         notes: AlbumNotes.collapsingStar,
         nasaImages: [
@@ -197,9 +187,8 @@ const SongData = {
         trackNumber: 10,
         songLength: "3:45",
         songSources: [
-            //{src: getSongURL("01-the-big-bang.mp4"), type:"audio/mp4"},
-            {src: getSongURL("01-the-big-bang.mp3"), type:"audio/mpeg"},
-            {src: getSongURL("01-the-big-bang.ogg"), type:"audio/ogg"}
+            {src: getSongURL("10-one-last-alarm-before-the-end.mp3"), type:"audio/mpeg"},
+            {src: getSongURL("10-one-last-alarm-before-the-end.ogg"), type:"audio/ogg"}
         ],
         notes: AlbumNotes.oneLastAlarm,
         nasaImages: [
@@ -215,11 +204,10 @@ const SongData = {
     track11: {
         title: "Spacetime Will Be Torn Apart",
         trackNumber: 11,
-        songLength: "3:45",
+        songLength: "6:13",
         songSources: [
-            //{src: getSongURL("01-the-big-bang.mp4"), type:"audio/mp4"},
-            {src: getSongURL("01-the-big-bang.mp3"), type:"audio/mpeg"},
-            {src: getSongURL("01-the-big-bang.ogg"), type:"audio/ogg"}
+            {src: getSongURL("11-spacetime-will-be-torn-apart.mp3"), type:"audio/mpeg"},
+            {src: getSongURL("11-spacetime-will-be-torn-apart.ogg"), type:"audio/ogg"}
         ],
         notes: AlbumNotes.spacetime,
         nasaImages: [
@@ -235,11 +223,10 @@ const SongData = {
     track12: {
         title: "What Happens Now?",
         trackNumber: 12,
-        songLength: "3:45",
+        songLength: "1:45",
         songSources: [
-            //{src: getSongURL("01-the-big-bang.mp4"), type:"audio/mp4"},
-            {src: getSongURL("01-the-big-bang.mp3"), type:"audio/mpeg"},
-            {src: getSongURL("01-the-big-bang.ogg"), type:"audio/ogg"}
+            {src: getSongURL("12-what-happens-now.mp3"), type:"audio/mpeg"},
+            {src: getSongURL("12-what-happens-now.ogg"), type:"audio/ogg"}
         ],
         notes: AlbumNotes.whatHappensNow,
         nasaImages: [

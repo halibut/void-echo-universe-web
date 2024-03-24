@@ -3,6 +3,7 @@ import {LocationContextProvider} from './contexts/location-context';
 import './styles/App.css';
 import './styles/Content.css';
 import './styles/Animations.css';
+import './styles/Visualizers.css';
 
 import Navigator from './components/Navigator';
 import NotFound from './pages/NotFound';
@@ -14,10 +15,7 @@ import MainMenu from './pages/MainMenu';
 import { createTrackPage } from './pages/TrackPage';
 import SongData from './service/SongData';
 import Utils from './utils/Utils';
-import NasaTestPage from './pages/NasaTestPage';
-import HelperPage from './pages/Helper';
 import Credits from './pages/Credits';
-//import Start from '../chapters/Chapter00/Chapter00View';
 
 function createSongScreen(sd) {
   return {

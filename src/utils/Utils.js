@@ -9,6 +9,45 @@ class UtilsApi {
     return mins * 60 + seconds;
   };
 
+  /**
+   * Gets the average magnitude within low, mid, and high frequency ranges
+   * @param {*} fftData Array containing magnitude data
+   * @param {*} sampleRate Sample rate of the AudioContext 
+   * @param {*} lowFreq The low end of the frequency range
+   * @param {*} highFreq The high end of the frequency range
+   * @returns a structure containing {low, mid, high} magnitude values
+   */
+  getFreqRangeAmounts = (fftData, sampleRate, lowFreqCutoff, highFreqCutoff) => {
+    const bins = fftData.length;
+    const freqsPerBin = sampleRate * .5 / bins;
+    const lowBinCutoff = Math.max(1, Math.floor(lowFreqCutoff / freqsPerBin));
+    const highBinCutoff = Math.max(lowBinCutoff+1, Math.min(Math.floor(highFreqCutoff / freqsPerBin), bins-1));
+
+    let low = 0;
+    for (let i = 0; i < lowBinCutoff; i++) {
+      low += fftData[i];
+    }
+    low = low / lowBinCutoff;
+
+    let mid = 0
+    for (let i = lowBinCutoff; i < highBinCutoff; i++) {
+      mid += fftData[i];
+    }
+    mid = mid / (highBinCutoff - lowBinCutoff);
+
+    let high = 0
+    for (let i = highBinCutoff; i < bins; i++) {
+      high += fftData[i];
+    }
+    high = high / (bins - highBinCutoff);
+
+    return {
+      low,
+      mid,
+      high,
+    };
+  }
+
   fftDataToSmallerArray = (fftData, array, options) => {
     const o = options ? options : {};
     const freqStart = o.freqStart ? o.freqStart : 0;
@@ -98,7 +137,24 @@ class UtilsApi {
       return this.trackNameToPath(SongList[curPageIndex-1].title)
     }
   }
+  findNextSongData = (songData, repeat) => {
+    const curSongIndex = SongList.findIndex(song => {
+      return song.title === songData.title;
+    });
+  
+    if (curSongIndex === SongList.length - 1) {
+      if (repeat) {
+        return SongList[0];
+      } else {
+        return null;
+      }
+    } else {
+      return SongList[curSongIndex+1];
+    }
+  }
 }
+
+
 
 const Utils = new UtilsApi();
 export default Utils;

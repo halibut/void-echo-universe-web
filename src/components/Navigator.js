@@ -7,10 +7,11 @@ import {
 } from "react";
 
 import LocationContext from "../contexts/location-context";
-import { setBackgroundImage } from "../service/BackgroundService";
+import { setDefaultBackground } from "../service/BackgroundService";
 import Background from "../components/Background";
 import Sound from "./Sound";
 import AudioControls from "./AudioControls";
+import Visualizer from "./Visualizer";
 
 const DEFAULT_OPTS = {
   time: 1000,
@@ -144,11 +145,7 @@ const Navigator = ({ screens, NotFoundPage }) => {
   }, [location, killTransition, startTransition]);
 
   useEffect(() => {
-    setBackgroundImage(require("../images/chapter_00_bg.jpg"), {
-      staticStyle: {opacity: 0.3, transform:`scale(3)`},
-      imageClass: "spin-bg-slow",
-      transitionTime: 0,
-    });
+    setDefaultBackground(1000);
   }, []);
 
   const {
@@ -234,8 +231,9 @@ const Navigator = ({ screens, NotFoundPage }) => {
 
   return (
     <div className="main-nav">
-      <Background />
-      <Sound />
+      <Background key="bg" />
+      <Visualizer key="viz" />
+      <Sound key="sound" />
 
       {comps}
 

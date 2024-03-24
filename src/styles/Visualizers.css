@@ -1,0 +1,12 @@
+.blend-bg-visualizer {
+    /*transform: translateZ(0);*/
+    --low: 0;
+    --mid: 0;
+    --high: 0;
+    width: 100%;
+    height: 100%;
+    mix-blend-mode: color-dodge;
+    background-color: #0800;
+    /*filter: brightness(calc(100% * var(--mid)));*/
+    backdrop-filter: brightness(calc(50% + 50% * var(--mid))) blur(calc(5px - var(--low) * 7.5px));
+}

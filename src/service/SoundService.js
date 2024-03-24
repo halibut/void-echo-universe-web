@@ -21,9 +21,11 @@ class SoundServiceCls {
     constructor() {
         this.audioChangeHandler = null;
         this.soundSubscribers = new Subscription("sound-subs");
+        this.enabledSubscribers = new Subscription("ac-enabled-subs");
         this.sound = null;
         this.soundSrc = null;
         this.soundOptions = {};
+        this.soundKey = null;
         this.element = null;
         this.init();
     }
@@ -33,6 +35,8 @@ class SoundServiceCls {
             
             this.ac = new AudioContext({latencyHint:'interactive'});
             console.log("Audio Context: "+this.ac.state);
+
+            this.ac.addEventListener("statechange", this._handleStateChange);
 
             //Create a Gain node. This node will solely be used
             //to control output volume. Attach to the destination node.
@@ -75,8 +79,16 @@ class SoundServiceCls {
         }
     };
 
+    _handleStateChange = (evt) => {
+        const state = evt.state;
+        this.enabledSubscribers.notifySubscribers({
+            enabled: state === "running",
+            audioContextState: state,
+        });
+    }
+
     isSuspended = () => {
-        return !this.ac || this.ac.state === 'suspended';
+        return !this.ac || this.ac.state === 'suspended' || this.ac.state === 'interrupted';
     }
 
     tryResume = async () => {
@@ -123,8 +135,9 @@ class SoundServiceCls {
         const playNewSong = () => {
             this.soundSrc = source;
             this.soundOptions = options;
+            this.soundKey = Date.now();
             if (this.audioChangeHandler) {
-                this.audioChangeHandler({src:source, options});
+                this.audioChangeHandler({src:source, options, key: this.soundKey});
             }
             else {
                 console.warn("No audioChangeHandler set.");
@@ -159,9 +172,23 @@ class SoundServiceCls {
         return this.element;
     }
 
+    getSampleRate = () => {
+        if (this.ac) {
+            return this.ac.sampleRate;
+        }
+        else {
+            return 44100;
+        }
+    }
+
     getFFTData = () => {
-        this.fftNode.getByteFrequencyData(this.fftBuffer);
-        return this.fftBuffer;
+        if (this.fftNode) {
+            this.fftNode.getByteFrequencyData(this.fftBuffer);
+            return this.fftBuffer;
+        }
+        else {
+            return null;
+        }
     }
 
     getVolume = () => {
@@ -213,10 +240,13 @@ class SoundServiceCls {
         return this.soundSubscribers.subscribe(handler);
     }
 
+    addSoundEnabledSubscriber = (handler) => {
+        return this.enabledSubscribers.subscribe(handler);
+    }
+
     setAudioChangeHandler = (handler) => {
         this.audioChangeHandler = handler;
     }
-    
 }
 
 const SoundService = new SoundServiceCls();

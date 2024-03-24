@@ -4,10 +4,8 @@ import SoundService from "../service/SoundService";
 import SongData from "../service/SongData";
 import Link from "../components/Link";
 import Utils from "../utils/Utils";
-import { setBackgroundImage } from "../service/BackgroundService";
+import { setDefaultBackground } from "../service/BackgroundService";
 import SideMenu from "../components/SideMenu";
-import AudioControls from "../components/AudioControls";
-
 
 const TrackItem = ({songData, selected}) => {
   const color = selected ? '#bfd1ff' : "#ddd"; 
@@ -29,12 +27,8 @@ const MainMenu = ({isLoadingOut, isLoadingIn, fullyLoaded}) => {
   const [currentTrack, setCurrentTrack] = useState(State.getCurrentTrack());
 
   useEffect(() => {
-    setBackgroundImage(require("../images/chapter_00_bg.jpg"), {
-      staticStyle: {opacity: 0.3, transform:`scale(3)`},
-      imageClass: "spin-bg-slow",
-      transitionTime: 3000,
-    });
-
+    setDefaultBackground(3000);
+    
     const trackSub = State.subscribeToStateChanges((stateEvent) => {
       if(stateEvent.state === "currentTrack") {
         setCurrentTrack(stateEvent.value);
