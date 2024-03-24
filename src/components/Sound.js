@@ -76,7 +76,7 @@ const Sound = () => {
         })
 
         audioObj = (
-            <audio key={audio.key} ref={setElmRef}>
+            <audio key={audio.key} ref={setElmRef} >
                 {sources}
             </audio>
         );

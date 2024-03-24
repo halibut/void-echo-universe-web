@@ -6,6 +6,7 @@ import Link from "../components/Link";
 import Utils from "../utils/Utils";
 import { setDefaultBackground } from "../service/BackgroundService";
 import SideMenu from "../components/SideMenu";
+import { VisualizerService } from "../components/Visualizer";
 
 const TrackItem = ({songData, selected}) => {
   const color = selected ? '#bfd1ff' : "#ddd"; 
@@ -28,7 +29,7 @@ const MainMenu = ({isLoadingOut, isLoadingIn, fullyLoaded}) => {
 
   useEffect(() => {
     setDefaultBackground(3000);
-    
+
     const trackSub = State.subscribeToStateChanges((stateEvent) => {
       if(stateEvent.state === "currentTrack") {
         setCurrentTrack(stateEvent.value);
@@ -36,6 +37,8 @@ const MainMenu = ({isLoadingOut, isLoadingIn, fullyLoaded}) => {
     });
 
     SoundService.setSound(SongData.track00.songSources, {play:true, loop:true, fadeOutBeforePlay: 2});
+
+    VisualizerService.setVisualizer("blend");
 
     return () => {
       trackSub.unsubscribe();

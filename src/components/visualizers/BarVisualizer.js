@@ -48,10 +48,10 @@ const BarVisualizer = () => {
             const hh = Math.floor(h / 2);
 
             const segments = barArray.length;
-            const segWidth = Math.floor(hw / segments);
+            const segWidth = Math.floor(1.25 * hw / segments);
 
             let xOffset = 0;
-            for (let i = 0; i < segments; i++) {
+            for (let i = 1; i < segments; i++) {
                 const value = Math.max(0, Math.min(barArray[i], 255)) / 255 * hh;
                 //ctxt.clearRect(hw - ((i + 1) * segWidth), -value, segWidth, value * 2);
                 const y = hh - value;

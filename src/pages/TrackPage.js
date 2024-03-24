@@ -9,6 +9,7 @@ import SideMenu from "../components/SideMenu";
 import { IoIosPlay, IoIosSkipForward, IoIosSkipBackward, IoIosPause } from "react-icons/io";
 
 import { setLocation } from "../contexts/location-context";
+import { VisualizerService } from "../components/Visualizer";
 
 /**
  * Returns a component that is basically a wrapper around TrackPage, but with the specified songDat.
@@ -54,6 +55,8 @@ const TrackPage = ({
         State.setCurrentTrack(songData.trackNumber);
         //console.log("Setting sound: " + JSON.stringify(songData.title));
         SoundService.setSound(songData.songSources, {play:true, fadeOutBeforePlay:2});
+
+        VisualizerService.setVisualizer("bars", {});
 
         const soundSub = SoundService.addSoundSubscriber((s) => {
             setSound(s);

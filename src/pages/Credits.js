@@ -5,6 +5,7 @@ import Link from "../components/Link";
 import { setDefaultBackground } from "../service/BackgroundService";
 import SideMenu from "../components/SideMenu";
 import Constants from "../constants";
+import { VisualizerService } from "../components/Visualizer";
 
 
 const Credits = ({isLoadingOut, isLoadingIn, fullyLoaded}) => {
@@ -13,6 +14,8 @@ const Credits = ({isLoadingOut, isLoadingIn, fullyLoaded}) => {
     setDefaultBackground(3000);
 
     SoundService.setSound(SongData.track00.songSources, {play:true, loop:true, fadeOutBeforePlay: 2});
+
+    VisualizerService.setVisualizer("blend");
 
     return () => {
 
