@@ -9,4 +9,5 @@
     background-color: #0800;
     /*filter: brightness(calc(100% * var(--mid)));*/
     backdrop-filter: brightness(calc(50% + 50% * var(--mid))) blur(calc(5px - var(--low) * 7.5px));
+    -webkit-backdrop-filter: brightness(calc(50% + 50% * var(--mid))) blur(calc(5px - var(--low) * 7.5px));
 }
