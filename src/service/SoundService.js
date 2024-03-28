@@ -16,17 +16,35 @@ const AudioContext = window.AudioContext || window.webkitAudioContext;
 //Note that most of the time there will only be one [media source] at a time
 //but all of them will connect to the same [mediaTargetNode]
 
+const READY_STATES = {
+    CAN_PLAY_THROUGH: 4
+};
+
 class SoundServiceCls {
 
     constructor() {
-        this.audioChangeHandler = null;
         this.soundSubscribers = new Subscription("sound-subs");
+        this.eventSubscribers = new Subscription("sound-events");
         this.enabledSubscribers = new Subscription("ac-enabled-subs");
+
+        this.audioChangeHandler = null;
         this.sound = null;
-        this.soundSrc = null;
-        this.soundOptions = {};
-        this.soundKey = null;
-        this.element = null;
+        this.soundElement = null;
+
+        this.queuedAudioChangeHandler = null;
+        this.queuedSound = null;
+
+        this.EVENTS = {
+            CAN_PLAY_THROUGH: "canplaythrough",
+            WARN_30_SECONDS_REMAINING: "30secondwarning",
+            WARN_5_SECONDS_REMAINING: "5secondwarning",
+            WARN_1_SECOND_REMAINING: "1secondwarning",
+            SEEKED: "seeked",
+            PLAYING: "playing",
+            PAUSED: "paused",
+            SOUND_MOUNTED: "soundmounted",
+        }
+
         this.init();
     }
 
@@ -42,6 +60,11 @@ class SoundServiceCls {
             //to control output volume. Attach to the destination node.
             this.gainNode = this.ac.createGain();
             this.gainNode.connect(this.ac.destination);
+            if (State.isMuted()) {
+                this.gainNode.gain.linearRampToValueAtTime(0, this.ac.currentTime + 0.1);
+            } else {
+                this.gainNode.gain.linearRampToValueAtTime(State.getLastVolume(), this.ac.currentTime + 0.1);
+            }
 
 
             //Create a FFT/analyser node.
@@ -127,17 +150,19 @@ class SoundServiceCls {
     setSound = async (source, options) => {
         await this.tryResume();
 
-        if (this.soundSrc === source) {
+        if (this.sound?.source === source) {
             console.log("Same sound requested.");
             return;
         }
 
         const playNewSong = () => {
-            this.soundSrc = source;
-            this.soundOptions = options;
-            this.soundKey = Date.now();
+            this.sound = {
+                source: source,
+                options: options,
+                key: Date.now(),
+            };
             if (this.audioChangeHandler) {
-                this.audioChangeHandler({src:source, options, key: this.soundKey});
+                this.audioChangeHandler(this.sound);
             }
             else {
                 console.warn("No audioChangeHandler set.");
@@ -153,23 +178,173 @@ class SoundServiceCls {
         }
     };
 
-    loadFromAudioElement = (element) => {
-        const source = this.ac.createMediaElementSource(element);
-        
-        source.connect(this.mediaTargetNode);
+    queueSound = (source, options) => {
+        if (this.sound?.source === source || this.queuedSound?.source === source) {
+            console.log(`Same sound queued: ${JSON.stringify(source)}`);
+            return;
+        }
 
-        this.element = element;
-        this.soundSubscribers.notifySubscribers(element);
+        console.log(`Queueing new sound:  ${JSON.stringify(source)}`);
 
-        return source;
+        this.queuedSound ={
+            source: source,
+            options: options,
+            key: Date.now(),
+        };
+        if (this.queuedAudioChangeHandler) {
+            this.queuedAudioChangeHandler(this.queuedSound);
+        }
+    }
+
+    _handleReadyToPlay = () => {
+        if (!this._readyToPlay) {
+            console.log("Initial Ready-To-Play")
+
+            this.eventSubscribers.notifySubscribers({event: this.EVENTS.CAN_PLAY_THROUGH});
+            if (this.sound?.options.loop === true) {
+                this.soundElement.loop = true;
+            }
+            if (this.sound?.options.play) {
+                this.soundElement.currentTime = 0;
+                this.soundElement.muted = false;
+                this.soundElement.volume = 1;
+                this.soundElement.play();
+                if (!State.isMuted()) {
+                    this.setVolume(State.getLastVolume());
+                } 
+            }
+        }
+        this._readyToPlay = true;
+    }
+
+    _handleCanPlayThroughEvent = (e) => {
+        this._readyState = READY_STATES.CAN_PLAY_THROUGH;
+
+        this._handleReadyToPlay();
     };
+
+    _handleTimeUpdateEvent = (e) => {
+        const elm = e.target;
+        const timeRemaining = elm.duration - elm.currentTime;
+        if (!this._warn30Seconds && timeRemaining <= 30) {
+            this._warn30Seconds = true;
+            this.eventSubscribers.notifySubscribers({event: this.EVENTS.WARN_30_SECONDS_REMAINING, timeRemaining:timeRemaining});
+        }
+        if (!this._warn5Seconds && timeRemaining <= 5) {
+            this._warn5Seconds = true;
+            this.eventSubscribers.notifySubscribers({event: this.EVENTS.WARN_5_SECONDS_REMAINING, timeRemaining:timeRemaining});
+        }
+        if (!this._warn1Second && timeRemaining <= 1) {
+            this._warn1Second = true;
+            this.eventSubscribers.notifySubscribers({event: this.EVENTS.WARN_1_SECOND_REMAINING, timeRemaining:timeRemaining});
+        }
+    };
+
+    _handleSeekedEvent = (e) => {
+        const elm = e.target;
+        const currentTime = elm.currentTime;
+        const timeRemaining = elm.duration - currentTime;
+        if (timeRemaining >= 30) {
+            this._warn30Seconds = false;
+        }
+        if (timeRemaining >= 5) {
+            this._warn5Seconds = false;
+        }
+        if (timeRemaining >= 1) {
+            this._warn1Second = false;
+        }
+        this.eventSubscribers.notifySubscribers({event: this.EVENTS.SEEKED, seekTime:currentTime});
+    };
+
+    _handleProgressEvent = (e) => {
+        this._readyState = this.soundElement.readyState;
+
+        if (this._readyState === READY_STATES.CAN_PLAY_THROUGH) {
+            this._handleReadyToPlay();
+        }
+    };
+
+    _handlePlayEvent = (e) => {
+        console.log("Started playing")
+        this.eventSubscribers.notifySubscribers({event: this.EVENTS.PLAYING});
+    };
+
+    _handlePauseEvent = (e) => {
+        console.log("Paused")
+        this.eventSubscribers.notifySubscribers({event: this.EVENTS.PAUSED});
+    };
+
+    loadFromAudioElement = (element) => {
+        if (this.soundElement === element) {
+            console.log("Loaded same audio element.");
+            return;
+        }
+
+        console.log("Mounted audio element.");
+
+        if (this.soundElement) {
+            this.soundElement.removeEventListener("canplaythrough", this._handleCanPlayThroughEvent);
+            this.soundElement.removeEventListener("timeupdate", this._handleTimeUpdateEvent);
+            this.soundElement.removeEventListener("seeked", this._handleSeekedEvent);
+            this.soundElement.removeEventListener("progress", this._handleProgressEvent);
+            this.soundElement.removeEventListener("play", this._handlePlayEvent);
+            this.soundElement.removeEventListener("pause", this._handlePauseEvent);
+        }
+
+        this.soundElement = element;
+
+        if (element) {
+            element.load();
+
+            const source = this.ac.createMediaElementSource(element);
+            
+            source.connect(this.mediaTargetNode);
+
+            this._warn30Seconds = false;
+            this._warn5Seconds = false;
+            this._warn1Second = false;
+            this._readyToPlay = false;
+            this._readyState = element.readyState;
+            
+            this.soundElement.addEventListener("canplaythrough", this._handleCanPlayThroughEvent);
+            this.soundElement.addEventListener("timeupdate", this._handleTimeUpdateEvent);
+            this.soundElement.addEventListener("seeked", this._handleSeekedEvent);
+            this.soundElement.addEventListener("progress", this._handleProgressEvent);
+            this.soundElement.addEventListener("play", this._handlePlayEvent);
+            this.soundElement.addEventListener("pause", this._handlePauseEvent);
+
+            //Handle the case where the audio element has already mounted and loaded enough to be able to play
+            //through before this loadFromAudioElement function is invoked. This will make sure subscribers
+            //still get a "canplaythrough" event.
+            if (this._readyState === READY_STATES.CAN_PLAY_THROUGH) {
+                this._handleReadyToPlay();
+            }
+
+            this.soundSubscribers.notifySubscribers(element);
+            this.eventSubscribers.notifySubscribers({event: this.EVENTS.SOUND_MOUNTED});
+
+            return source;
+        }
+    };
+
+    _handleQueueElementStatus = (e) => {
+        console.log("Queued Element Status: " + e.target.readyState);
+        if (e.target.readyState === READY_STATES.CAN_PLAY_THROUGH) {
+            console.log("Queued Element Ready to Play.");
+        }
+    };
+
+    queuedElementMounted = (qElement) => {
+        qElement.addEventListener("progress", this._handleQueueElementStatus);
+        qElement.load();
+    }
 
     /**
     * Return the current audio element
     * @returns 
     */
     getAudioElement = () => {
-        return this.element;
+        return this.soundElement;
     }
 
     getSampleRate = () => {
@@ -231,6 +406,48 @@ class SoundServiceCls {
         }
         State.setMuted(muted);
     };
+
+    play = () => {
+        if (this.soundElement) {
+            this.soundElement.play();
+        }
+    }
+
+    pause = () => {
+        if (this.soundElement) {
+            this.soundElement.pause();
+        }
+    }
+
+    seekTo = (time) => {
+        if (this.soundElement) {
+            this.soundElement.currentTime = time;
+        }
+    }
+
+    getCurrentTime = () => {
+        if (this.soundElement) {
+            return this.soundElement.currentTime;
+        } else {
+            return -1;
+        }
+    }
+
+    getDuration = () => {
+        if (this.soundElement) {
+            return this.soundElement.duration;
+        } else {
+            return -1;
+        }
+    }
+
+    isPaused = () => {
+        if (this.soundElement) {
+            return this.soundElement.paused;
+        } else {
+            return false;
+        }
+    }
     
     isMuted = () => {
         return this.gainNode.gain.value === 0 && State.getLastVolume() !== 0;
@@ -244,9 +461,18 @@ class SoundServiceCls {
         return this.enabledSubscribers.subscribe(handler);
     }
 
+    subscribeEvents = (handler) => {
+        return this.eventSubscribers.subscribe(handler);
+    }
+
     setAudioChangeHandler = (handler) => {
         this.audioChangeHandler = handler;
     }
+
+    setQueuedAudioChangeHandler = (handler) => {
+        this.queuedAudioChangeHandler = handler;
+    }
+
 }
 
 const SoundService = new SoundServiceCls();

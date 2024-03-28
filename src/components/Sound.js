@@ -7,9 +7,13 @@ import State from "../service/State";
 
 const Sound = () => {
     const [audio, setAudio] = useState(null);
+    const [queuedAudio, setQueuedAudio] = useState(null);
 
     const soundElementRef = useRef(null);
     const audioRef = useRef(audio);
+
+    const queuedSoundElementRef = useRef(null);
+    const queuedAudioRef = useRef(null);
     
     useEffect(() => {
         SoundService.setAudioChangeHandler((newAudio) => {
@@ -18,41 +22,15 @@ const Sound = () => {
             //react knows to unmount the old element and remount the new one.
             audioRef.current = newAudio;
             setAudio(newAudio);
+            queuedAudioRef.current = null;
+            setQueuedAudio(null);
+        });
+
+        SoundService.setQueuedAudioChangeHandler((newAudio) => {
+            queuedAudioRef.current = newAudio;
+            setQueuedAudio(newAudio);
         });
     }, [])
-
-    /**
-     * Prepare a song to be played. Whether the song immediately plays or not
-     * depends on the audio options.
-     */
-    const initSong = useCallback(() => {
-        soundElementRef.current.oncanplaythrough = (evt) => {
-            //console.log("Sound ready: "+soundElementRef.current);
-
-            const aud = audioRef.current;
-
-            if (aud && aud.options) {
-                //console.log("Sound options: "+JSON.stringify(aud.options))
-
-                if (aud.options.loop) {
-                    evt.target.loop = true;
-                }
-                
-                if (aud.options.play) {
-                    evt.target.volume = 1;
-                    evt.target.play().then(() => {
-                        //console.log("Playing");
-                        if (!State.isMuted()) {
-                            SoundService.setVolume(State.getLastVolume());
-                        }
-                    }).catch(e => {
-                        console.error("Error playing sound: ",e);
-                    });
-                }
-            }
-
-        };
-    }, []);
 
     const setElmRef = useCallback((elm) => {
         console.log("Sound element mounted: " + elm);
@@ -61,22 +39,39 @@ const Sound = () => {
 
         if (soundElementRef.current) {
             SoundService.loadFromAudioElement(soundElementRef.current);
-
-            initSong();
         }
-        else {
-            console.log("Removing previous sound.");
-        }
-    }, [initSong]);
+    }, []);
 
-    let audioObj = null;
-    if (audio && audio.src) {
-        const sources = audio.src.map(s => {
+    const setQueuedElmRef = useCallback((elm) => {
+        console.log("Queued sound element mounted: " + elm);
+
+        queuedSoundElementRef.current = elm;
+        if (queuedSoundElementRef.current) {
+            SoundService.queuedElementMounted(queuedSoundElementRef.current);
+        }
+    }, []);
+
+    const soundElms = [];
+
+    if (audio && audio.source) {
+        const sources = audio.source.map(s => {
             return <source key={s.src} src={s.src} type={s.type} />
         })
 
-        audioObj = (
-            <audio key={audio.key} ref={setElmRef} >
+        soundElms.push(
+            <audio key={audio.key} ref={setElmRef} preload="auto">
+                {sources}
+            </audio>
+        );
+    }
+
+    if (queuedAudio && queuedAudio.source && queuedAudio.key !== audio?.key) {
+        const sources = queuedAudio.source.map(s => {
+            return <source key={s.src} src={s.src} type={s.type} />
+        })
+
+        soundElms.push(
+            <audio key={queuedAudio.key} ref={setQueuedElmRef} preload="auto">
                 {sources}
             </audio>
         );
@@ -84,7 +79,7 @@ const Sound = () => {
 
     return (
         <div style={{display: "none"}}>
-            {audioObj}
+            {[soundElms]}
         </div>
     )
 };

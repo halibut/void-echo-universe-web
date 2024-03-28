@@ -47,7 +47,6 @@ function bgImageReducer(state, action){
 const SlideShow = ({songData}) => {
     const [state, dispatch] = useReducer(bgImageReducer, {songImages:[], imageCategory:null, imageIndex:null});
 
-    const soundRef = useRef(null);
     const nextImgTimeout = useRef(null);
 
     const {songImages, imageCategory, imageIndex} = state;
@@ -56,16 +55,8 @@ const SlideShow = ({songData}) => {
     useEffect(() => {
         dispatch({type: "load-images", songData});
         dispatch({type: "next-image", songPosition:0});
-
-        //Subscribe to changes in the sound element so that we can get the song position 
-        //when we need it
-        const soundSub = SoundService.addSoundSubscriber((soundElement) => {
-            soundRef.current = soundElement;
-        });
         
         return () => {
-            //unsubscribe from sound element updates
-            soundSub.unsubscribe();
 
             //Clean up any next image timeout we might have
             if (nextImgTimeout.current) {
@@ -129,7 +120,7 @@ const SlideShow = ({songData}) => {
 
             //Set a timer to display the next image after some time.
             nextImgTimeout.current = window.setTimeout(() => {
-                const songPosition = soundRef.current ? soundRef.current.currentTime : 0;
+                const songPosition = SoundService.getCurrentTime();
                 dispatch({type: "next-image", songPosition:songPosition});
             }, slideTimeMillis);
         }

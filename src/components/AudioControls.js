@@ -9,7 +9,6 @@ import {
 
 import SoundService from "../service/SoundService";
 import Utils from "../utils/Utils";
-import Sound from "./Sound";
 import State from "../service/State";
 
 const VolumeControl = ({uiExpanded}) => {
@@ -87,27 +86,43 @@ const VolumeControl = ({uiExpanded}) => {
   );
 };
 
-const PositionControl = ({ sound, uiExpanded}) => {
+const PositionControl = ({uiExpanded}) => {
   const [expanded, setExpanded] = useState(false);
   const [pos, setPos] = useState(0);
   const [hoverTime, setHoverTime] = useState(null);
   const updateRef = useRef(null);
 
-  const updatePos = useCallback(() => {
-    setPos(sound.currentTime);
-  }, [sound]);
+  useEffect(() => {
+    const soundEventSub = SoundService.subscribeEvents((e) => {
+      switch(e.event) {
+        case SoundService.EVENTS.PLAYING:
+          setPos(SoundService.getCurrentTime());
+          break;
+        case SoundService.EVENTS.SEEKED:
+          setPos(SoundService.getCurrentTime());
+          break;
+        default:
+          //nothing
+      }
+      
+    });
+
+    return () => {
+      soundEventSub.unsubscribe();
+    }
+  }, []);
 
   useEffect(() => {
-    if (sound) {
-      updateRef.current = window.setInterval(updatePos, 100);
+    updateRef.current = window.setInterval(() => {
+      setPos(SoundService.getCurrentTime());
+    }, 100);
 
-      return () => {
-        if (updateRef.current) {
-          window.clearInterval(updateRef.current);
-        }
-      };
-    }
-  }, [sound, updatePos]);
+    return () => {
+      if (updateRef.current) {
+        window.clearInterval(updateRef.current);
+      }
+    };
+  }, []);
 
   const onEnter = useCallback((e) => {
     setExpanded(true);
@@ -124,14 +139,14 @@ const PositionControl = ({ sound, uiExpanded}) => {
     const xPos = e.clientX;
 
     const ratio = xPos / divWidth;
-    const secs = Math.floor(sound.duration * ratio);
+    const secs = Math.floor(SoundService.getDuration() * ratio);
 
     setHoverTime({
       time: Utils.formatSeconds(secs),
       x: xPos,
       w: divWidth,
     });
-  }, [sound]);
+  }, []);
 
   const handleSeekChange = useCallback((e) => {
     const divElm = e.currentTarget;
@@ -140,17 +155,19 @@ const PositionControl = ({ sound, uiExpanded}) => {
 
     const ratio = xPos / divWidth;
 
-    sound.currentTime = sound.duration * ratio;
-  }, [sound]);
+    SoundService.seekTo(SoundService.getDuration() * ratio);
+  }, []);
 
-  if (!sound) {
+  if (pos < 0) {
     return null;
   } else {
+    const duration = SoundService.getDuration();
+
     let hoverTimeText = null;
     let posTimeText = null;
     if (expanded || uiExpanded) {
       if (pos !== null) {
-        const songPercent = pos / sound.duration;
+        const songPercent = pos / duration;
 
         const tStyle={
           backgroundColor: "transparent",
@@ -204,7 +221,7 @@ const PositionControl = ({ sound, uiExpanded}) => {
         <div className="position-background">
           <div
             className="position-indicator"
-            style={{ width: `${100 * (pos / sound.duration)}%` }}
+            style={{ width: `${100 * (pos / duration)}%` }}
           >
             {posTimeText}
           </div>
@@ -216,20 +233,8 @@ const PositionControl = ({ sound, uiExpanded}) => {
   }
 };
 
-const AudioControls = ({
-
-}) => {
+const AudioControls = () => {
   const [expanded, setExpanded] = useState(State.getStateValue("audio-controls-expanded", false));
-
-  const [sound, setSound] = useState(null);
-
-  useEffect(() => {
-    const sub = SoundService.addSoundSubscriber(setSound);
-
-    return () => {
-      sub.unsubscribe();
-    }
-  }, []);
 
   useEffect(() => {
     const sub = State.subscribeToStateChanges((e) => {
@@ -264,7 +269,7 @@ const AudioControls = ({
   return (
     <div className={"audio-controls " + (expanded ? "expanded" : "")} onMouseEnter={expandControls} onMouseLeave={shrinkControls}>
       <div className="row" style={{ flex: 1, height: "100%", alignItems:'flex-end' }}>
-        {sound && <PositionControl sound={sound} uiExpanded={expanded} />}
+        {<PositionControl uiExpanded={expanded} />}
       </div>
       <VolumeControl uiExpanded={expanded} />
     </div>

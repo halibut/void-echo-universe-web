@@ -40,33 +40,96 @@ const TrackPage = ({
     const [zenMode, setZenMode] = useState(State.getStateValue("zen-mode", false));
     const [showNotes, setShowNotes] = useState(State.getStateValue("show-notes", true));
     const [showControls, setShowControls] = useState(false);
-    const [paused, setPaused] = useState(false);
+    const [paused, setPaused] = useState(SoundService.isPaused() || SoundService.isSuspended());
     const [fadingControls, setFadingControls] = useState(false);
-
-    const [sound, setSound] = useState(null);
-    const soundRef = useRef(sound);
 
     const controlsTimeoutRef = useRef(null);
     const fadeoutControlsRef = useRef(null);
-    const nextQueuedRef = useRef(false);
+    const nextTrackTimeoutRef = useRef(null);
+
+    const goToPrevious = useCallback((e) => {
+        if (e) {
+            e.stopPropagation();
+            e.preventDefault();
+        }
+        const prevURL = Utils.calculatePreviousSongPage(songData, false);
+        setLocation(prevURL);
+    }, [songData]);
+
+    const goToNext = useCallback((e) => {
+        if (e) {
+            e.stopPropagation();
+            e.preventDefault();
+        }
+        const nextURL = Utils.calculateNextSongPage(songData, false);
+        setLocation(nextURL);
+    }, [songData]);
 
     useEffect(() => {
         //Play the song for this track
         State.setCurrentTrack(songData.trackNumber);
         //console.log("Setting sound: " + JSON.stringify(songData.title));
-        SoundService.setSound(songData.songSources, {play:true, fadeOutBeforePlay:2});
+        SoundService.setSound(songData.songSources, {
+            play:true,
+            fadeOutBeforePlay: 2,
+            loop: State.getStateValue("repeat", "none") === "track",
+        });
 
         VisualizerService.setVisualizer("bars", {});
 
-        const soundSub = SoundService.addSoundSubscriber((s) => {
-            setSound(s);
+        const soundEventSub = SoundService.subscribeEvents((e) => {
+            switch (e.event) {
+                case SoundService.EVENTS.WARN_30_SECONDS_REMAINING: {
+                        //Start loading the next track if we get near the end of this one
+                        const repeatMode = State.getStateValue("repeat", "none");
+                        if (repeatMode !== "track") {
+                            const nextSong = Utils.findNextSongData(songData, repeatMode === "album");
+                            if (nextSong) {
+                                SoundService.queueSound(nextSong.songSources, {play: true});
+                            }
+                        }
+                    }
+                    break;
+                case SoundService.EVENTS.WARN_1_SECOND_REMAINING: {
+                        //Set short timeout to play the next track if we get to the end of this one
+                        const repeatMode = State.getStateValue("repeat", "none");
+                        if (repeatMode !== "track") {
+                            const time = Math.floor(Math.min(1, Math.max(e.timeRemaining, 0)) * 1000);
+                            nextTrackTimeoutRef.current = window.setTimeout(() => {
+                                const nextSong = Utils.findNextSongData(songData, repeatMode === "album");
+                                if (nextSong) {
+                                    SoundService.setSound(nextSong.songSources, {play: true});
+                                    nextTrackTimeoutRef.current = null;
+                                }
+                                goToNext();
+                            }, time);
+                        }
+                    }
+                    break;
+                case SoundService.EVENTS.PLAYING: 
+                    setPaused(false);
+                    break;
+                case SoundService.EVENTS.PAUSED:
+                    setPaused(true);
+                    if (controlsTimeoutRef.current) {
+                        window.clearTimeout(controlsTimeoutRef.current);
+                        controlsTimeoutRef.current = null;
+                    }
+                    setShowControls(true);
+                    break;
+                default:
+            }
         });
 
         return () => {
-            soundSub.unsubscribe();
-            setSound(null);
+            soundEventSub.unsubscribe();
+
+            if (nextTrackTimeoutRef.current) {
+                window.clearTimeout(nextTrackTimeoutRef.current);
+                nextTrackTimeoutRef.current = null;
+            }
         }
-    }, [songData]);
+    }, [songData, goToNext]);
 
     useEffect(() => {
         const stateSub = State.subscribeToStateChanges((stateEvent) => {
@@ -126,118 +189,24 @@ const TrackPage = ({
 
     }, []);
 
-    const goToPrevious = useCallback((e) => {
-        if (e) {
-            e.stopPropagation();
-            e.preventDefault();
-        }
-        const prevURL = Utils.calculatePreviousSongPage(songData, false);
-        setLocation(prevURL);
-    }, [songData]);
-
-    const goToNext = useCallback((e) => {
-        if (e) {
-            e.stopPropagation();
-            e.preventDefault();
-        }
-        const nextURL = Utils.calculateNextSongPage(songData, false);
-        setLocation(nextURL);
-    }, [songData]);
-
-    const handlePaused = useCallback(() => {
-        setPaused(true);
-        if (controlsTimeoutRef.current) {
-            window.clearTimeout(controlsTimeoutRef.current);
-            controlsTimeoutRef.current = null;
-        }
-        setShowControls(true);
-    }, []);
-
-    const handlePlayed = useCallback(() => {
-        setPaused(false);
-    }, []);
-
-    const handleEnded = useCallback(() => {
-        if (State.getStateValue("repeat", "none") === "track") {
-            if (soundRef.current) {
-                soundRef.current.currentTime = 0;
-                soundRef.current.play();
-            }
-        } else {
-            goToNext();
-        }
-    }, [goToNext]);
-
-    const handleQueueNext = useCallback((evt) => {
-        //This event might be called 60fps, so we need to be efficient
-        //First, check if we've already queued the next song because we only want to queue once
-        if (nextQueuedRef.current === false) {
-            //If the repeate mode is set to "track", then don't queue anything because we just repeat this same song
-            if (State.getStateValue("repeat", "none") !== "track") {
-                //If the time remaining is less than 30 seconds, then attempt to queue the next song
-                if (soundRef.current && (soundRef.current.duration - soundRef.current.currentTime) < 30) {
-
-                    /*
-                    //Determine what the next song should be (depends on if we have album repeat or not)
-                    const nextSongdata = Utils.findNextSongData(songData, State.getStateValue("repeat", "none") !== "album");
-
-                    //Queue the sound in the sound service. This will cause the audio element to pre-load.
-                    SoundService.addQueueSound(nextSongdata.songSources, {play:true, fadeOutBeforePlay:0})
-
-                    //Make sure the next time this event fires, we don't trigger it again
-                    nextQueuedRef.current = true;
-
-                    */
-                }
-            }
-        }
-    }, [songData]);
-
-    useEffect(() => {
-        const oldSound = soundRef.current;
-        soundRef.current = sound;
-
-        if (sound !== oldSound) {
-            if (oldSound) {
-                oldSound.removeEventListener("pause", handlePaused);
-                oldSound.removeEventListener("play", handlePlayed);
-                oldSound.removeEventListener("ended", handleEnded);
-                oldSound.removeEventListener("timeupdate", handleQueueNext);
-            }
-
-            if (sound) {
-                sound.addEventListener("pause", handlePaused);
-                sound.addEventListener("play", handlePlayed);
-                sound.addEventListener("ended", handleEnded);
-                sound.addEventListener("timeupdate", handleQueueNext);
-
-                if (sound.paused || SoundService.isSuspended()) {
-                    setPaused(true);
-                }
-            }
-        }
-    }, [sound, handlePaused, handlePlayed, handleEnded, handleQueueNext]);
-    
     const togglePause = useCallback((e) => {
-        e.stopPropagation();
+        if (e) {
+            e.stopPropagation();
+        }
+
         if (SoundService.isSuspended()) {
             SoundService.tryResume();
-            if (sound) {
-                sound.play();
-                startHidingControls(0);
-            }
+            SoundService.play();
+            startHidingControls(0);
             return;
         }
 
-        if (sound) {
-            if (sound.paused) {
-                sound.play();
-                startHidingControls(0);
-            } else {
-                sound.pause();
-            }
+        if (SoundService.isPaused()) {
+            SoundService.play();
+        } else {
+            SoundService.pause();
         }
-    }, [sound, startHidingControls]);
+    }, [startHidingControls]);
 
     const toggleControls = useCallback((e) => {
         e.stopPropagation();
