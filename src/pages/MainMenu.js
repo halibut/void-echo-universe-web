@@ -25,13 +25,13 @@ const TrackItem = ({songData, selected}) => {
 }
 
 const MainMenu = ({isLoadingOut, isLoadingIn, fullyLoaded}) => {
-  const [currentTrack, setCurrentTrack] = useState(State.getCurrentTrack());
+  const [currentTrack, setCurrentTrack] = useState(State.getStateValue(State.KEYS.CURRENT_TRACK, 1));
 
   useEffect(() => {
     setDefaultBackground(3000);
 
     const trackSub = State.subscribeToStateChanges((stateEvent) => {
-      if(stateEvent.state === "currentTrack") {
+      if(stateEvent.state === State.KEYS.CURRENT_TRACK) {
         setCurrentTrack(stateEvent.value);
       }
     });

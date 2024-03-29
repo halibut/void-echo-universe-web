@@ -44,7 +44,7 @@ function bgImageReducer(state, action){
     }
 }
 
-const SlideShow = ({songData}) => {
+const SlideShow = ({songData, onLoadImageMetadata}) => {
     const [state, dispatch] = useReducer(bgImageReducer, {songImages:[], imageCategory:null, imageIndex:null});
 
     const nextImgTimeout = useRef(null);
@@ -67,7 +67,7 @@ const SlideShow = ({songData}) => {
     }, [songData])
 
     const showNextImage = useCallback(async (nasaId, slideTimeMillis) => {
-        const quality = State.getImageQuality();
+        const quality = State.getStateValue(State.KEYS.IMG_QUALITY, "large");
 
         if (quality === "none") {
             return;
@@ -97,7 +97,12 @@ const SlideShow = ({songData}) => {
                 },
             });
         }
-    }, []);
+
+        const metadataResult = await NasaImagesApi.getImageMetadata(nasaId);
+        if (metadataResult && onLoadImageMetadata) {
+            onLoadImageMetadata(metadataResult);
+        }
+    }, [onLoadImageMetadata]);
 
     useEffect(() => {
         //songImages, and showNextImage should never change,

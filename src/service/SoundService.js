@@ -60,10 +60,11 @@ class SoundServiceCls {
             //to control output volume. Attach to the destination node.
             this.gainNode = this.ac.createGain();
             this.gainNode.connect(this.ac.destination);
-            if (State.isMuted()) {
+            if (State.getStateValue(State.KEYS.MUTED, false)) {
                 this.gainNode.gain.linearRampToValueAtTime(0, this.ac.currentTime + 0.1);
             } else {
-                this.gainNode.gain.linearRampToValueAtTime(State.getLastVolume(), this.ac.currentTime + 0.1);
+                const lastVol = State.getStateValue(State.KEYS.LAST_VOLUME, 1);
+                this.gainNode.gain.linearRampToValueAtTime(lastVol, this.ac.currentTime + 0.1);
             }
 
 
@@ -88,12 +89,13 @@ class SoundServiceCls {
             this.mediaTargetNode.connect(this.fftNode);
 
             //Set the gain/volume to whatever was last set by the user
-            if (State.isMuted()) {
+            if (State.getStateValue(State.KEYS.MUTED, false)) {
                 console.log("Sound was muted last session.");
                 this.gainNode.gain.value = 0;
             } else {
-                console.log("Last volume: "+State.getLastVolume());
-                this.gainNode.gain.value = State.getLastVolume();
+                const lastVol = State.getStateValue(State.KEYS.LAST_VOLUME, 1);
+                console.log("Last volume: "+lastVol);
+                this.gainNode.gain.value = lastVol;
             }
             
         }
@@ -209,8 +211,9 @@ class SoundServiceCls {
                 this.soundElement.muted = false;
                 this.soundElement.volume = 1;
                 this.soundElement.play();
-                if (!State.isMuted()) {
-                    this.setVolume(State.getLastVolume());
+                if (!State.getStateValue(State.KEYS.MUTED, false)) {
+                    const lastVol = State.getStateValue(State.KEYS.LAST_VOLUME, 1);
+                    this.setVolume(lastVol);
                 } 
             }
         }
@@ -377,7 +380,7 @@ class SoundServiceCls {
         this.gainNode.gain.cancelScheduledValues(this.ac.currentTime);
         this.gainNode.gain.setValueAtTime(this.gainNode.gain.value, 0);
         this.gainNode.gain.linearRampToValueAtTime(Math.max(0, Math.min(vol, 1)), this.ac.currentTime + 0.1);
-        State.setLastVolume(vol);
+        State.setStateValue(State.KEYS.LAST_VOLUME, vol);
     }
 
     /**
@@ -401,10 +404,11 @@ class SoundServiceCls {
             this.gainNode.gain.linearRampToValueAtTime(0, this.ac.currentTime + 0.1);
         }
         else {
+            const lastVol = State.getStateValue(State.KEYS.LAST_VOLUME, 1);
             this.gainNode.gain.setValueAtTime(0, 0);
-            this.gainNode.gain.linearRampToValueAtTime(State.getLastVolume(), this.ac.currentTime + 0.1);
+            this.gainNode.gain.linearRampToValueAtTime(lastVol, this.ac.currentTime + 0.1);
         }
-        State.setMuted(muted);
+        State.setStateValue(State.KEYS.MUTED, muted);
     };
 
     play = () => {
@@ -450,7 +454,8 @@ class SoundServiceCls {
     }
     
     isMuted = () => {
-        return this.gainNode.gain.value === 0 && State.getLastVolume() !== 0;
+        const lastVol = State.getStateValue(State.KEYS.LAST_VOLUME, 1);
+        return this.gainNode.gain.value === 0 && lastVol !== 0;
     }
 
     addSoundSubscriber = (handler) => {

@@ -234,11 +234,11 @@ const PositionControl = ({uiExpanded}) => {
 };
 
 const AudioControls = () => {
-  const [expanded, setExpanded] = useState(State.getStateValue("audio-controls-expanded", false));
+  const [expanded, setExpanded] = useState(State.getStateValue(State.KEYS.AUDIO_CONTROLS_EXPANDED, false));
 
   useEffect(() => {
     const sub = State.subscribeToStateChanges((e) => {
-      if (e.state === "audio-controls-expanded") {
+      if (e.state === State.KEYS.AUDIO_CONTROLS_EXPANDED) {
         setExpanded(e.value);
       }
     });

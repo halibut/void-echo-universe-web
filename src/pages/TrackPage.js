@@ -37,11 +37,14 @@ const TrackPage = ({
     fullyLoaded,
     isLoadingIn,
 }) => {
-    const [zenMode, setZenMode] = useState(State.getStateValue("zen-mode", false));
-    const [showNotes, setShowNotes] = useState(State.getStateValue("show-notes", true));
+    const [zenMode, setZenMode] = useState(State.getStateValue(State.KEYS.ZEN_MODE, false));
+    const [showNotes, setShowNotes] = useState(State.getStateValue(State.KEYS.SHOW_NOTES, true));
     const [showControls, setShowControls] = useState(false);
+    const [showImageAttribution, setShowImageAttribution] = useState(State.getStateValue(State.KEYS.SHOW_IMAGE_ATTRIBUTION, false));
     const [paused, setPaused] = useState(SoundService.isPaused() || SoundService.isSuspended());
     const [fadingControls, setFadingControls] = useState(false);
+
+    const [imageMetadata, setImageMetadata] = useState(null);
 
     const controlsTimeoutRef = useRef(null);
     const fadeoutControlsRef = useRef(null);
@@ -67,12 +70,12 @@ const TrackPage = ({
 
     useEffect(() => {
         //Play the song for this track
-        State.setCurrentTrack(songData.trackNumber);
+        State.setStateValue(State.KEYS.CURRENT_TRACK, songData.trackNumber);
         //console.log("Setting sound: " + JSON.stringify(songData.title));
         SoundService.setSound(songData.songSources, {
             play:true,
             fadeOutBeforePlay: 2,
-            loop: State.getStateValue("repeat", "none") === "track",
+            loop: State.getStateValue(State.KEYS.REPEAT_MODE, "none") === "track",
         });
 
         VisualizerService.setVisualizer("bars", {});
@@ -81,7 +84,7 @@ const TrackPage = ({
             switch (e.event) {
                 case SoundService.EVENTS.WARN_30_SECONDS_REMAINING: {
                         //Start loading the next track if we get near the end of this one
-                        const repeatMode = State.getStateValue("repeat", "none");
+                        const repeatMode = State.getStateValue(State.KEYS.REPEAT_MODE, "none");
                         if (repeatMode !== "track") {
                             const nextSong = Utils.findNextSongData(songData, repeatMode === "album");
                             if (nextSong) {
@@ -92,7 +95,7 @@ const TrackPage = ({
                     break;
                 case SoundService.EVENTS.WARN_1_SECOND_REMAINING: {
                         //Set short timeout to play the next track if we get to the end of this one
-                        const repeatMode = State.getStateValue("repeat", "none");
+                        const repeatMode = State.getStateValue(State.KEYS.REPEAT_MODE, "none");
                         if (repeatMode !== "track") {
                             const time = Math.floor(Math.min(1, Math.max(e.timeRemaining, 0)) * 1000);
                             nextTrackTimeoutRef.current = window.setTimeout(() => {
@@ -134,12 +137,15 @@ const TrackPage = ({
     useEffect(() => {
         const stateSub = State.subscribeToStateChanges((stateEvent) => {
             switch (stateEvent.state) {
-                case "show-notes":
+                case State.KEYS.SHOW_NOTES:
                     setShowNotes(stateEvent.value);
                     break;
-                case "zen-mode":
+                case State.KEYS.ZEN_MODE:
                     setZenMode(stateEvent.value);
                     break; 
+                case State.KEYS.SHOW_IMAGE_ATTRIBUTION:
+                    setShowImageAttribution(stateEvent.value);
+                    break;
                 default:
                     break;
             }
@@ -177,7 +183,7 @@ const TrackPage = ({
             fadeoutControlsRef.current = window.setTimeout(() => {
                 fadeoutControlsRef.current = null;
                 setShowControls(false);
-                State.setStateValue("audio-controls-expanded", false);
+                State.setStateValue(State.KEYS.AUDIO_CONTROLS_EXPANDED, false);
             }, 250);
         };
 
@@ -211,7 +217,7 @@ const TrackPage = ({
     const toggleControls = useCallback((e) => {
         e.stopPropagation();
         if (!showControls) {
-            State.setStateValue("audio-controls-expanded", true)
+            State.setStateValue(State.KEYS.AUDIO_CONTROLS_EXPANDED, true)
             setShowControls(true);
             startHidingControls(10000);
         } else {
@@ -244,15 +250,26 @@ const TrackPage = ({
         );
     }
 
+    let imageAttribution = null;
+    if (showImageAttribution && imageMetadata && !zenMode) {
+        imageAttribution = (
+            <div className="image-attribution">
+                <p>{imageMetadata["AVAIL:Description"]}</p>
+            </div>
+        )
+    }
+
     return (
         <div className='center' style={{flex:1, width:'100%', paddingBottom:50, position:'relative'}}>
             { !isLoadingOut && (
-                <SlideShow key={songData.title} songData={songData} />
+                <SlideShow key={songData.title} songData={songData} onLoadImageMetadata={showImageAttribution ? setImageMetadata : undefined} />
             )}
 
             <div className="col" style={{position:"absolute", left:0, top:0, width:"100%", height:"100%", cursor:"pointer"}} onClick={toggleControls} ></div>
 
             {songText}
+
+            {imageAttribution}
 
             { (showControls) && (
                 <div key="controls" className={"track-controls "+ (fadingControls ? "fade-out" : "fade-in")} style={{animationDuration:"250ms"}} onClick={toggleControls}>

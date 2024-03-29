@@ -105,6 +105,39 @@ class NasaImagesApiCls {
             return null;
         }
     }
+
+    getImageMetadata = async (nasaAssetId) => {
+        try {
+            const metaResp = await fetch(`${Constants.NASA_API}/metadata/${nasaAssetId}`, {
+                method: "GET",
+                mode: "cors"
+            });
+
+            if (metaResp.ok) {
+                const metaRespJson = await metaResp.json();
+                const jsonDataResp = await fetch(metaRespJson.location, {
+                    method: "GET",
+                    mode: "cors"
+                });
+
+                if (jsonDataResp.ok) {
+                    const metadata = await jsonDataResp.json();
+
+                    return metadata;
+                }
+                else {
+                    console.error("Error getting metadata for NASA asset: "+nasaAssetId);
+                }
+            }
+            else {
+                console.error("Error getting metadata URL for NASA asset: "+nasaAssetId);
+            }
+
+        } catch (e) {
+            console.error("Error getting image metadata for NAS asset: "+nasaAssetId, e);
+        }
+        return null;
+    }
 }
 
 const NasaImagesApi = new NasaImagesApiCls();

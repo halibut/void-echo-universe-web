@@ -125,7 +125,7 @@ const SideMenu = ({
 
     if (!open) {
         let additionalClass = "";
-        if (State.getStateValue("zen-mode")) {
+        if (State.getStateValue(State.KEYS.ZEN_MODE)) {
             additionalClass = "zen-mode";
         }
         return (
@@ -156,13 +156,16 @@ const SideMenu = ({
                     <span className="menu-title">Options</span>
                 </div>
                 <div> 
-                    <ToggleMenuItem optionKey={"zen-mode"} optionName={"Zen Mode"} defaultValue={false} />
+                    <ToggleMenuItem optionKey={State.KEYS.ZEN_MODE} optionName={"Zen Mode"} defaultValue={false} />
                 </div>
                 <div>
-                    <ToggleMenuItem optionKey={"show-notes"} optionName={"Show Story"} defaultValue={true} />
+                    <ToggleMenuItem optionKey={State.KEYS.SHOW_NOTES} optionName={"Show Story"} defaultValue={true} />
                 </div>
                 <div>
-                    <ToggleMenuItem optionKey={"show-visual"} optionName={"Visualizations"} defaultValue={true} />
+                    <ToggleMenuItem optionKey={State.KEYS.SHOW_VISUALIZER} optionName={"Visualizations"} defaultValue={true} />
+                </div>
+                <div>
+                    <ToggleMenuItem optionKey={State.KEYS.SHOW_IMAGE_ATTRIBUTION} optionName={"Image Attribution"} defaultValue={false} />
                 </div>
                 <div>
                     <MultiOptionMenuItem 

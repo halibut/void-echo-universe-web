@@ -48,12 +48,12 @@ const createVizComponent = (name, options) => {
 
 
 const Visualizer = () => {
-    const [enabled, setEnabled] = useState(State.getStateValue("show-visual"));
+    const [enabled, setEnabled] = useState(State.getStateValue(State.KEYS.SHOW_VISUALIZER, true));
     const [vis, setVis] = useState(VisualizerService.getVisualizer());
 
     useEffect(() => {
         const stateSub = State.subscribeToStateChanges(({state, value}) => {
-            if (state === "show-visual") {
+            if (state === State.KEYS.SHOW_VISUALIZER) {
                 setEnabled(value);
             }
         });

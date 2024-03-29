@@ -6,6 +6,19 @@ class StateApi {
         this.stateSubscribers = new Subscription("global-state");
         this.state = {}
 
+        this.KEYS = {
+            LAST_VOLUME: "last-volume",
+            MUTED: "muted",
+            CURRENT_TRACK: "current-track",
+            IMG_QUALITY: "img-quality",
+            AUDIO_CONTROLS_EXPANDED: "audio-controls-expanded",
+            SHOW_VISUALIZER: "show-visual",
+            SHOW_NOTES: "show-notes",
+            ZEN_MODE: "zen-mode",
+            REPEAT_MODE: "repeat",
+            SHOW_IMAGE_ATTRIBUTION: "image-attribution"
+        }
+
         const appStateStr = localStorage.getItem("app-state");
         if (appStateStr) {
             this.state = JSON.parse(appStateStr);
@@ -40,38 +53,6 @@ class StateApi {
                 value: value,
             });
         }
-    }
-
-    setLastVolume = (vol) => {
-        this.setStateValue("last-volume", vol);
-    }
-
-    getLastVolume = () => {
-        return this.getStateValue("last-volume", 1);
-    }
-
-    setMuted = (muted) =>{
-        this.setStateValue("muted", muted);
-    }
-
-    isMuted = () =>{
-        return this.getStateValue("muted", false);
-    }
-
-    getCurrentTrack = () => {
-        return this.getStateValue("currentTrack", 1);
-    }
-
-    setCurrentTrack = (trackNumber) => {
-        this.setStateValue("currentTrack", trackNumber);
-    }
-
-    getImageQuality = () => {
-        return this.getStateValue("img-quality", "large");
-    }
-
-    setImageQuality = qual => {
-        this.setStateValue("img-quality", qual);
     }
 
     subscribeToStateChanges = (subscriberFunction) => {
