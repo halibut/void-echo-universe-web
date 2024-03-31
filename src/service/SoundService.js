@@ -34,6 +34,9 @@ class SoundServiceCls {
         this.queuedAudioChangeHandler = null;
         this.queuedSound = null;
 
+        this.timeEvents = []
+        this.nextTimeEventInd = 0;
+
         this.EVENTS = {
             CAN_PLAY_THROUGH: "canplaythrough",
             WARN_30_SECONDS_REMAINING: "30secondwarning",
@@ -228,7 +231,8 @@ class SoundServiceCls {
 
     _handleTimeUpdateEvent = (e) => {
         const elm = e.target;
-        const timeRemaining = elm.duration - elm.currentTime;
+        const currentTime = elm.currentTime;
+        const timeRemaining = elm.duration - currentTime;
         if (!this._warn30Seconds && timeRemaining <= 30) {
             this._warn30Seconds = true;
             this.eventSubscribers.notifySubscribers({event: this.EVENTS.WARN_30_SECONDS_REMAINING, timeRemaining:timeRemaining});
@@ -240,6 +244,27 @@ class SoundServiceCls {
         if (!this._warn1Second && timeRemaining <= 1) {
             this._warn1Second = true;
             this.eventSubscribers.notifySubscribers({event: this.EVENTS.WARN_1_SECOND_REMAINING, timeRemaining:timeRemaining});
+        }
+
+        //Check to see if any registered time events need to fire
+        if (this.nextTimeEventInd < this.timeEvents.length) {
+            let nextEvent = this.timeEvents[this.nextTimeEventInd];
+            while (nextEvent && nextEvent.time <= currentTime) {
+                nextEvent.safeHandler(nextEvent.time, currentTime);
+
+                if (nextEvent.repeatable === true) {
+                    this.nextTimeEventInd++;
+                } else {
+                    //if it's not a repeatable event, then remove it from the array
+                    this.timeEvents.splice(this.nextTimeEventInd, 1);
+                }
+
+                if (this.nextTimeEventInd < this.timeEvents.length) {
+                    nextEvent = this.timeEvents[this.nextTimeEventInd];
+                } else {
+                    nextEvent = null;
+                }
+            }
         }
     };
 
@@ -257,6 +282,25 @@ class SoundServiceCls {
             this._warn1Second = false;
         }
         this.eventSubscribers.notifySubscribers({event: this.EVENTS.SEEKED, seekTime:currentTime});
+
+        //Handle any timeEvents that need to fire on passed time
+        this.nextTimeEventInd = 0;
+        if (this.timeEvents.length > 0) {
+            let nextEvent = this.timeEvents[this.nextTimeEventInd];
+            while(nextEvent && nextEvent.time < currentTime) {
+                if (nextEvent.executeIfPassed) {
+                    nextEvent.safeHandler(nextEvent.time, currentTime);
+                }
+                
+                this.nextTimeEventInd++;
+
+                if (this.nextTimeEventInd < this.timeEvents.length) {
+                    nextEvent = this.timeEvents[this.nextTimeEventInd];
+                } else {
+                    nextEvent = null;
+                }
+            }
+        }
     };
 
     _handleProgressEvent = (e) => {
@@ -303,6 +347,8 @@ class SoundServiceCls {
             
             source.connect(this.mediaTargetNode);
 
+            this.timeEvents = [];
+            this.nextTimeEventInd = 0;
             this._warn30Seconds = false;
             this._warn5Seconds = false;
             this._warn1Second = false;
@@ -468,6 +514,40 @@ class SoundServiceCls {
 
     subscribeEvents = (handler) => {
         return this.eventSubscribers.subscribe(handler);
+    }
+
+    registerTimeEvent = (time, handler, repeatable, executeIfPassed) => {
+        //this.timeEvents is a sorted array of time/handler pairs
+        //When we register a new timeEvent, we just need to make sure it stays sorted
+
+        const safeHandler = (handlerTime, currentSongTime) => {
+            try {
+                handler(handlerTime, currentSongTime);
+            } catch (e) {
+                console.error(`Error in time [${time}] event handler function.`, e);
+            }
+        }
+
+        const firstIndexAfterTime = this.timeEvents.findIndex(te => te.time > time);
+        if (firstIndexAfterTime < 0) {
+            console.log("Added time event handler to end of event list.");
+            this.timeEvents.push({time, safeHandler, repeatable, executeIfPassed});
+        } else {
+            console.log(`Added time event handler index ${firstIndexAfterTime} of event list.`);
+            this.timeEvents.splice(firstIndexAfterTime, 0, {time, safeHandler, repeatable, executeIfPassed});
+
+            if (firstIndexAfterTime > this.nextTimeEventInd) {
+                this.nextTimeEventInd++;
+            }
+        }
+
+        //Special case where we try to register a time event and the time has already passed
+        if (executeIfPassed === true && this.nextTimeEventInd > 0) {
+            const nextEvent = this.timeEvents[this.nextTimeEventInd];
+            if (time > nextEvent.time) {
+                safeHandler(time, this.getCurrentTime());
+            }
+        }
     }
 
     setAudioChangeHandler = (handler) => {

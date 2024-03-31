@@ -6,6 +6,21 @@ import ArcVisualizer from "./visualizers/ArcVisualizer copy";
 import Subscription from "../service/Subscription";
 
 class VisualizerServiceCls {
+    VISUALIZERS = {
+        BLEND_BG: {
+            name: "blend-bg",
+            component: BlendBgVisualizer,
+        },
+        BARS: {
+            name: "bars",
+            component: BarVisualizer,
+        },
+        ARCS: {
+            name: "arcs",
+            component: ArcVisualizer,
+        },
+    };
+
     constructor() {
         this.subscribers = new Subscription("viz");
         this.currentViz = null;
@@ -34,16 +49,21 @@ export const VisualizerService = new VisualizerServiceCls();
 
 
 const createVizComponent = (name, options) => {
-    switch (name) {
-        case "blend":
-            return <BlendBgVisualizer key={name} options />;
-        case "bars":
-            return <BarVisualizer key={name} options />;
-        case "arc":
-            return <ArcVisualizer key={name} options />;
-        default:
-            return <BlendBgVisualizer key={name} options />;
+    let viz = Object.keys(VisualizerService.VISUALIZERS)
+        .map(k => VisualizerService.VISUALIZERS[k])
+        .find(v => v.name === name);
+    
+
+    if (!viz) {
+        console.warn("No vizualizer named: "+name);
+        viz = VisualizerService.VISUALIZERS.BLEND_BG;
     }
+
+    const Comp = viz.component;
+
+    return (
+        <Comp key={name} options={options} />
+    );
 } 
 
 

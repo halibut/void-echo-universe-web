@@ -1,6 +1,7 @@
 import imageCats from "../images/nasa-images-by-category";
 import AlbumNotes from "./AlbumNotes";
 import Constants from "../constants";
+import { VisualizerService } from "../components/Visualizer";
 
 function getSongURL(fileName) {
     if (Constants.USE_CDN === true) {
@@ -9,6 +10,8 @@ function getSongURL(fileName) {
         return require(`../sounds/${fileName}`);
     }
 }
+
+const VIZ = VisualizerService.VISUALIZERS;
 
 const SongData = {
     track00: {
@@ -35,6 +38,10 @@ const SongData = {
         notes: AlbumNotes.bigBang,
         nasaImages: [
             {time: 0, slideTime:40, images: imageCats.bigBang}
+        ],
+        visualizer: [
+            {time: 0, viz: VIZ.BLEND_BG, options:{primary: [255, 255, 255, 1], secondary: [255, 255, 255, 1]}},
+            {time: 27.5, viz: VIZ.ARCS, options:{primary: [255, 255, 255, 0.5], secondary: [0, 0, 255, 1]}},
         ],
         links: {
             bandcamp: "https://google.com",

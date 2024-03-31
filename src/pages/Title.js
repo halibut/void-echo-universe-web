@@ -38,7 +38,7 @@ const Title = ({fullyLoaded}) => {
   
         setDefaultBackground(3000);
 
-        VisualizerService.setVisualizer("blend");
+        VisualizerService.setVisualizer(VisualizerService.VISUALIZERS.BLEND_BG.name);
         
         return () => {
             if (autoTimeout.current) {

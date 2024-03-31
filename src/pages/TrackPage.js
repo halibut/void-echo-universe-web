@@ -7,6 +7,8 @@ import SlideShow from "../components/SlideShow";
 import SideMenu from "../components/SideMenu";
 
 import { IoIosPlay, IoIosSkipForward, IoIosSkipBackward, IoIosPause } from "react-icons/io";
+import { MdOutlineRepeat, MdOutlineRepeatOn, MdOutlineRepeatOneOn } from "react-icons/md";
+
 
 import { setLocation } from "../contexts/location-context";
 import { VisualizerService } from "../components/Visualizer";
@@ -43,12 +45,14 @@ const TrackPage = ({
     const [showImageAttribution, setShowImageAttribution] = useState(State.getStateValue(State.KEYS.SHOW_IMAGE_ATTRIBUTION, false));
     const [paused, setPaused] = useState(SoundService.isPaused() || SoundService.isSuspended());
     const [fadingControls, setFadingControls] = useState(false);
+    const [repeatMode, setRepeatMode] = useState(State.getStateValue(State.KEYS.REPEAT_MODE));
 
     const [imageMetadata, setImageMetadata] = useState(null);
 
     const controlsTimeoutRef = useRef(null);
     const fadeoutControlsRef = useRef(null);
     const nextTrackTimeoutRef = useRef(null);
+    const alreadyRegisteredTimeEventsRef = useRef(false);
 
     const goToPrevious = useCallback((e) => {
         if (e) {
@@ -68,6 +72,34 @@ const TrackPage = ({
         setLocation(nextURL);
     }, [songData]);
 
+    /**
+     * This function is called when the song is ready to be played and sets up time-based events
+     * configured for each song.
+     */
+    const registerTimeEvents = useCallback(() => {
+        if (!alreadyRegisteredTimeEventsRef.current) {
+            alreadyRegisteredTimeEventsRef.current = true;
+
+            //Register visualizer events if there are any
+            if (songData.visualizer) {
+                songData.visualizer.forEach(v => {
+                    const setVisualizer = () => {
+                        VisualizerService.setVisualizer(v.viz.name, v.options);
+                    }
+                    SoundService.registerTimeEvent(v.time, setVisualizer, true, true);
+                });
+            }
+            const printTime = (t, ct) => {
+                console.log(`Sound event [${t}] at time: ${ct}`);
+            }
+            window.setTimeout(() => {
+                SoundService.registerTimeEvent(0, printTime, true, true);
+                SoundService.registerTimeEvent(15, printTime, true, false);
+                SoundService.registerTimeEvent(25, printTime, false, false);
+            }, 0);
+        }
+    }, []);
+
     useEffect(() => {
         //Play the song for this track
         State.setStateValue(State.KEYS.CURRENT_TRACK, songData.trackNumber);
@@ -78,7 +110,7 @@ const TrackPage = ({
             loop: State.getStateValue(State.KEYS.REPEAT_MODE, "none") === "track",
         });
 
-        VisualizerService.setVisualizer("bars", {});
+        VisualizerService.setVisualizer(VisualizerService.VISUALIZERS.BLEND_BG.name);
 
         const soundEventSub = SoundService.subscribeEvents((e) => {
             switch (e.event) {
@@ -94,10 +126,11 @@ const TrackPage = ({
                     }
                     break;
                 case SoundService.EVENTS.WARN_1_SECOND_REMAINING: {
+                        const time = Math.floor(Math.min(1000, Math.max(e.timeRemaining, 0) * 1000 - 50));
                         //Set short timeout to play the next track if we get to the end of this one
                         const repeatMode = State.getStateValue(State.KEYS.REPEAT_MODE, "none");
                         if (repeatMode !== "track") {
-                            const time = Math.floor(Math.min(1, Math.max(e.timeRemaining, 0)) * 1000);
+                            
                             nextTrackTimeoutRef.current = window.setTimeout(() => {
                                 const nextSong = Utils.findNextSongData(songData, repeatMode === "album");
                                 if (nextSong) {
@@ -105,6 +138,11 @@ const TrackPage = ({
                                     nextTrackTimeoutRef.current = null;
                                 }
                                 goToNext();
+                            }, time);
+                        } else {
+                            window.setTimeout(() => {
+                                SoundService.seekTo(0);
+                                SoundService.play();
                             }, time);
                         }
                     }
@@ -119,6 +157,9 @@ const TrackPage = ({
                         controlsTimeoutRef.current = null;
                     }
                     setShowControls(true);
+                    break;
+                case SoundService.EVENTS.CAN_PLAY_THROUGH:
+                    registerTimeEvents();
                     break;
                 default:
             }
@@ -145,6 +186,9 @@ const TrackPage = ({
                     break; 
                 case State.KEYS.SHOW_IMAGE_ATTRIBUTION:
                     setShowImageAttribution(stateEvent.value);
+                    break;
+                case State.KEYS.REPEAT_MODE:
+                    setRepeatMode(stateEvent.value);
                     break;
                 default:
                     break;
@@ -214,6 +258,18 @@ const TrackPage = ({
         }
     }, [startHidingControls]);
 
+    const cycleRepeat = useCallback((e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (repeatMode === "album") {
+            State.setStateValue(State.KEYS.REPEAT_MODE, "track");
+        } else if ( repeatMode === "track" ) {
+            State.setStateValue(State.KEYS.REPEAT_MODE, "none");
+        } else {
+            State.setStateValue(State.KEYS.REPEAT_MODE, "album");
+        }
+    }, [repeatMode]);
+
     const toggleControls = useCallback((e) => {
         e.stopPropagation();
         if (!showControls) {
@@ -273,7 +329,7 @@ const TrackPage = ({
 
             { (showControls) && (
                 <div key="controls" className={"track-controls "+ (fadingControls ? "fade-out" : "fade-in")} style={{animationDuration:"250ms"}} onClick={toggleControls}>
-                    <div className="row" style={{width: "100%", maxWidth: 800, justifyContent:"space-around"}}>
+                    <div className="row" style={{width: "100%", maxWidth: 800, justifyContent:"space-around", margin:20}}>
                         <button type="button" onClick={goToPrevious}>
                             <IoIosSkipBackward style={{width:"1em", height:"1em"}} />
                         </button>
@@ -286,6 +342,17 @@ const TrackPage = ({
                         </button>
                         <button type="button" onClick={goToNext}>
                             <IoIosSkipForward style={{width:"1em", height:"1em"}} />
+                        </button>
+                    </div>
+                    <div className="row" style={{width: "100%", maxWidth: 800, justifyContent:"space-around", margin:20}}>
+                        <button type="button" onClick={cycleRepeat}>
+                            {repeatMode === "album" ? (
+                                <MdOutlineRepeatOn style={{width:"1em", height:"1em"}}/>
+                            ) : (repeatMode === "track") ? (
+                                <MdOutlineRepeatOneOn style={{width:"1em", height:"1em"}}/>
+                            ) : (
+                                <MdOutlineRepeat style={{width:"1em", height:"1em"}}/>
+                            )}
                         </button>
                     </div>
                 </div>

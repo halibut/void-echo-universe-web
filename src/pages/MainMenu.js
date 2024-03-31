@@ -38,7 +38,7 @@ const MainMenu = ({isLoadingOut, isLoadingIn, fullyLoaded}) => {
 
     SoundService.setSound(SongData.track00.songSources, {play:true, loop:true, fadeOutBeforePlay: 2});
 
-    VisualizerService.setVisualizer("blend");
+    VisualizerService.setVisualizer(VisualizerService.VISUALIZERS.BLEND_BG.name);
 
     return () => {
       trackSub.unsubscribe();
