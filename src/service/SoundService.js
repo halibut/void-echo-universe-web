@@ -550,6 +550,10 @@ class SoundServiceCls {
         }
     }
 
+    resetTimeEventsToStart = () => {
+        this.nextTimeEventInd = 0;
+    }
+
     setAudioChangeHandler = (handler) => {
         this.audioChangeHandler = handler;
     }

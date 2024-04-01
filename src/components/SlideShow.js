@@ -1,73 +1,29 @@
-import { useCallback, useEffect, useReducer, useRef } from "react";
-import Utils from "../utils/Utils";
+import { useCallback, useEffect, useRef } from "react";
 import SoundService from "../service/SoundService";
 import State from "../service/State";
 import NasaImagesApi from "../service/NasaImagesApi";
 import BackgroundService from "../service/BackgroundService";
+import Utils from "../utils/Utils";
 
-
-function bgImageReducer(state, action){
-    if (action.type === "load-images") {
-        const songData = action.songData;
-
-        const imgData = songData.nasaImages.map(ni => {
-            const shuffledImages = ni.images.slice();
-            Utils.shuffleArray(shuffledImages);
-            return {
-                ...ni,
-                images: shuffledImages,
-            };
-        });
-
-        return {
-            songImages: imgData,
-            imageCategory: null,
-            imageIndex: null,
-        }
-    }
-    else if (action.type === "next-image") {
-        const songPos = action.songPosition ? action.songPosition : 0;
-        const {songImages, imageIndex} = state;
-
-        let cat = 0;
-        while (cat < songImages.length-1 && songImages[cat].time >= songPos) {
-            cat++;
-        }
-
-        const newInd = imageIndex !== null ? imageIndex + 1 : 0;
-        
-        return {
-            songImages: songImages,
-            imageCategory: cat,
-            imageIndex: newInd,
-        };
-    }
-}
 
 const SlideShow = ({songData, onLoadImageMetadata}) => {
-    const [state, dispatch] = useReducer(bgImageReducer, {songImages:[], imageCategory:null, imageIndex:null});
-
+    const songImagesRef = useRef({imageSet:[], slideTimeMillis:30000});
+    const imageIndexRef = useRef(0);
+    
     const nextImgTimeout = useRef(null);
 
-    const {songImages, imageCategory, imageIndex} = state;
-
-    //When component loads, load our images and display whatever is first (next-image)
-    useEffect(() => {
-        dispatch({type: "load-images", songData});
-        dispatch({type: "next-image", songPosition:0});
-        
-        return () => {
-
-            //Clean up any next image timeout we might have
-            if (nextImgTimeout.current) {
-                window.clearTimeout(nextImgTimeout.current);
-                nextImgTimeout.current = null;
-            }
+    // Cleanup for component unmounting, or image category switching
+    const cancelTimeouts = () => {
+        if (nextImgTimeout.current) {
+            window.clearTimeout(nextImgTimeout.current);
+            nextImgTimeout.current = null;
         }
-    }, [songData])
+    }
 
     const showNextImage = useCallback(async (nasaId, slideTimeMillis) => {
         const quality = State.getStateValue(State.KEYS.IMG_QUALITY, "large");
+
+        console.log(`Next Image [${nasaId}] (${slideTimeMillis}ms - quality=${quality})`);
 
         if (quality === "none") {
             return;
@@ -104,32 +60,54 @@ const SlideShow = ({songData, onLoadImageMetadata}) => {
         }
     }, [onLoadImageMetadata]);
 
-    useEffect(() => {
-        //songImages, and showNextImage should never change,
-        //so if any other state changes, this will tell the
-        //BackgroundService to display the next image.
-        //
-        //We do not show any images if the page is loading out
-        if (songImages && songImages.length > 0 &&  imageCategory !== null && imageIndex !== null) {
-            const categoryData = songImages[imageCategory];
-            const imageSet = categoryData.images;
+    // Starts the slideshow for the specified imageSet
+    const startSlideshow = useCallback(() => {
+        cancelTimeouts();
 
-            //Calculate the number of miliseconds to display the image
-            //Note slideTime from the image set is in seconds
-            const slideTimeMillis = Math.max(5000, categoryData.slideTime * 1000);
+        const songImages = songImagesRef.current;
+        const imageIndex = imageIndexRef.current;
 
-            //Determine the image to display
-            const toDisplayId = imageSet[imageIndex % imageSet.length];
-
-            showNextImage(toDisplayId, slideTimeMillis);
-
-            //Set a timer to display the next image after some time.
-            nextImgTimeout.current = window.setTimeout(() => {
-                const songPosition = SoundService.getCurrentTime();
-                dispatch({type: "next-image", songPosition:songPosition});
-            }, slideTimeMillis);
+        const numImages = songImages.imageSet.length;
+        if (numImages > 0) {
+            const imageId = songImages.imageSet[imageIndex % numImages];
+            showNextImage(imageId, songImages.slideTimeMillis);
         }
-    }, [imageCategory, imageIndex, songImages, showNextImage])
+
+        nextImgTimeout.current = window.setTimeout(() => {
+            nextImgTimeout.current = null;
+            imageIndexRef.current++;
+            startSlideshow();
+        }, songImages.slideTimeMillis);  
+    }, [showNextImage]);
+
+    //When component loads, set up our time-based events for 
+    //switching categories
+    useEffect(() => {
+
+        //Register background image events, basically times when we change
+        //image sets for the song
+        if (songData.nasaImages) {
+            songData.nasaImages.forEach(i => {
+                const setBgImages = () => {
+                    const imageList = i.images.slice();
+                    Utils.shuffleArray(imageList);
+                    songImagesRef.current = {
+                        imageSet: imageList,
+                        slideTimeMillis: i.slideTime * 1000, 
+                    };
+                    imageIndexRef.current = 0;
+
+                    startSlideshow();
+                }
+                SoundService.registerTimeEvent(i.time, setBgImages, true, true);
+            })
+        }
+
+        return () => {
+            //Clean up any next image timeout we might have
+            cancelTimeouts();   
+        }
+    }, [songData, startSlideshow]);
 
 
     return null;

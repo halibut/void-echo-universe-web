@@ -89,16 +89,11 @@ const TrackPage = ({
                     SoundService.registerTimeEvent(v.time, setVisualizer, true, true);
                 });
             }
-            const printTime = (t, ct) => {
-                console.log(`Sound event [${t}] at time: ${ct}`);
-            }
-            window.setTimeout(() => {
-                SoundService.registerTimeEvent(0, printTime, true, true);
-                SoundService.registerTimeEvent(15, printTime, true, false);
-                SoundService.registerTimeEvent(25, printTime, false, false);
-            }, 0);
+
+            //Slideshow image events are handled within the SlideShow component
+            //so we don't need to do anything with the nasaImages here
         }
-    }, []);
+    }, [songData?.visualizer]);
 
     useEffect(() => {
         //Play the song for this track
@@ -143,6 +138,7 @@ const TrackPage = ({
                             window.setTimeout(() => {
                                 SoundService.seekTo(0);
                                 SoundService.play();
+                                SoundService.resetTimeEventsToStart();
                             }, time);
                         }
                     }

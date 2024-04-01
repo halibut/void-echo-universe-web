@@ -87,6 +87,8 @@ class UtilsApi {
       array[i] = array[j];
       array[j] = temp;
     }
+
+    return array;
   };
 
   trackNameToPath = (name) => {
@@ -150,6 +152,39 @@ class UtilsApi {
       }
     } else {
       return SongList[curSongIndex+1];
+    }
+  }
+
+  /**
+   * Calculates a specific color between c1 and c2, based on the place in time
+   * @param {*} c1 start color - array of 4 elements
+   * @param {*} c2 end color - array of 4 elements
+   * @param {*} t1 start time
+   * @param {*} t2 end time
+   * @param {*} currentTime the time (determins the percent of c1 or c2 returned)
+   * @param {*} outputArray optional array to keep the results, if not specified, a new array will be created
+   * @returns the output array
+   */
+  calculateGradientColor = (c1, c2, t1, t2, currentTime, outputArray) => {
+    if (currentTime <= t1) {
+      return c1;
+    } else if (currentTime >= t2) {
+      return c2;
+    } else {
+      const w = t2 - t1;
+      const x = currentTime - t1;
+
+      const a = x / w;
+
+      const array = outputArray ? outputArray : new Array(4);
+      for (let i = 0; i < 4; i++) {
+        array[i] = c1[i] + ( a * (c2[i] - c1[i]) );
+        if (i < 3) {
+          array[i] = Math.floor(array[i]);
+        }
+      }
+
+      return array;
     }
   }
 }

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import State from "../service/State";
 import BlendBgVisualizer from "./visualizers/BlendBgVisualizer";
 import BarVisualizer from "./visualizers/BarVisualizer";
-import ArcVisualizer from "./visualizers/ArcVisualizer copy";
+import ArcVisualizer from "./visualizers/ArcVisualizer";
 import Subscription from "../service/Subscription";
 
 class VisualizerServiceCls {

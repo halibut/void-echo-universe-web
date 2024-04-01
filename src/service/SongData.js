@@ -2,6 +2,7 @@ import imageCats from "../images/nasa-images-by-category";
 import AlbumNotes from "./AlbumNotes";
 import Constants from "../constants";
 import { VisualizerService } from "../components/Visualizer";
+import { Color, Gradient } from "../utils/Color";
 
 function getSongURL(fileName) {
     if (Constants.USE_CDN === true) {
@@ -40,8 +41,20 @@ const SongData = {
             {time: 0, slideTime:40, images: imageCats.bigBang}
         ],
         visualizer: [
-            {time: 0, viz: VIZ.BLEND_BG, options:{primary: [255, 255, 255, 1], secondary: [255, 255, 255, 1]}},
-            {time: 27.5, viz: VIZ.ARCS, options:{primary: [255, 255, 255, 0.5], secondary: [0, 0, 255, 1]}},
+            {time: 0, viz: VIZ.BLEND_BG, options:{
+                primary: Gradient(0,0,0,1, 255,255,255,1),
+                secondary: Gradient(0,0,0,1, 255,255,255,1),
+                gradientTimes: [0, 27.5],
+            }},
+            {time: 27.5, viz: VIZ.ARCS, options:{primary: Color(220, 220, 255, 0.95), secondary: Color(0, 0, 64, 0.95)}},
+            {time: 109.75, viz: VIZ.ARCS, options:{primary: Color(255, 220, 220, 0.95), secondary: Color(64, 0, 0, 0.95)}},
+            {time: 199.25, viz: VIZ.ARCS, options:{primary: Color(255, 220, 255, 0.95), secondary: Color(64, 0, 64, 0.95)}},
+            {time: 280.7, viz: VIZ.ARCS, options:{primary: Color(220, 255, 255, 0.95), secondary: Color(0, 64, 64, 0.95)}},
+            {time: 371, viz: VIZ.BLEND_BG, options:{
+                primary: Color(255,255,255,1, 0,0,0,1),
+                secondary: Color(255,255,255,1, 0,0,0,1),
+                gradientTimes: [371, 400],
+            }},
         ],
         links: {
             bandcamp: "https://google.com",
@@ -59,6 +72,13 @@ const SongData = {
         notes: AlbumNotes.cmb,
         nasaImages: [
             {time: 0, slideTime:30, images: imageCats.cmb.concat(imageCats.redshiftGalaxies)}
+        ],
+        visualizer: [
+            {time: 0, viz: VIZ.BARS, options:{primary: Color(255, 255, 255, 1), secondary: Color(0, 0, 0, 0.9)}},
+            {time: 98.5, viz: VIZ.BARS, options:{primary: Color(220, 220, 255, 0.95), secondary: Color(0, 0, 64, 0.95)}},
+            {time: 172.25, viz: VIZ.BARS, options:{primary: Color(0, 0, 0, 0.95), secondary: Color(255, 255, 255, 1)}},
+            {time: 207, viz: VIZ.BARS, options:{primary: Color(255, 255, 255, 1), secondary: Color(0, 0, 0, 0.95)}},
+            {time: 272.9, viz: VIZ.BARS, options:{primary: Color(0, 0, 32, 0.95), secondary: Color(255, 200, 200, 0.95)}},
         ],
         links: {
             bandcamp: "https://google.com",
