@@ -1,6 +1,10 @@
 import { SongList } from "../service/SongData";
 
 class UtilsApi {
+  #fftLogBuckets = {
+
+  }
+
   toSeconds = (string) => {
     const parts = string.split(":");
     const mins = +parts[0];
@@ -63,6 +67,78 @@ class UtilsApi {
 
       let num = 0.0;
       while(i <= j * ratio && i < l1) {
+        const bData = fftData[i];
+        if(bData > array[j]) {
+          array[j] = bData;
+        }
+        //array[j] += fftData[i];
+        i++;
+        //num++;
+      }
+
+      if(num) {
+        array[j] = array[j] / num;
+      }
+
+      j++;
+    }
+  };
+
+  /**
+   * Memoize fft to array logarithmic bucket conversion so that costly
+   * calculations can be skipped most frames of animation
+   * @param {int} fftDataLength 
+   * @param {int} arrayLength 
+   */
+  #getFftLogBuckets = (fftDataLength, arrayLength) => {
+    let fftLengthMemo = this.#fftLogBuckets[fftDataLength];
+    if (!fftLengthMemo) {
+      fftLengthMemo = {};
+      this.#fftLogBuckets[fftDataLength] = fftLengthMemo;
+    }
+
+    let bucketsMemo = fftLengthMemo[arrayLength];
+    if (!bucketsMemo) {
+      bucketsMemo = new Array(arrayLength);
+
+      //calculate the buckets here
+      let i = 0;
+      let j = 0;
+      const l1 = fftDataLength;
+      const l2 = arrayLength;
+      while(j < l2) {
+        const bucketCutoff = (l2) * (Math.exp(((j+1) / l2)/ 0.6932) - 1) 
+
+        while(i <= bucketCutoff && i < l1) {
+          i++;
+        }
+        bucketsMemo[j] = i;
+
+        j++;
+      }
+
+      //Finally memoize it for next time it's needed
+      fftLengthMemo[arrayLength] = bucketsMemo;
+    }
+
+    return bucketsMemo;
+  }
+
+  fftDataToSmallerArrayLogarithmic = (fftData, array) => {
+    let i = 0;
+    let j = 0;
+    const l1 = fftData.length;
+    const l2 = array.length;
+
+    const fftBuckets = this.#getFftLogBuckets(l1, l2);
+
+    while(j < l2) {
+      array[j] = 0.0;
+
+      const bucketCutoff = fftBuckets[j];
+
+      let num = 0.0;
+      while(i <= bucketCutoff && i < l1) {
         const bData = fftData[i];
         if(bData > array[j]) {
           array[j] = bData;
@@ -187,6 +263,7 @@ class UtilsApi {
       return array;
     }
   }
+
 }
 
 

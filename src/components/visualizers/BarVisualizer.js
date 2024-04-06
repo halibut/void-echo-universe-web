@@ -37,7 +37,7 @@ const BarVisualizer = ({options}) => {
     
     const doFrame = (canvas) => {
         const {barArray, w, h, primaryMixMode, secondaryMixMode} = dataRef.current;
-        const {primary, secondary, gradientTimes} = optsRef.current;
+        const {primary, secondary, gradientTimes, heightScale} = optsRef.current;
         const ctxt = canvas.getContext("2d");
 
         if (canvas.width !== w) {
@@ -64,7 +64,7 @@ const BarVisualizer = ({options}) => {
         const fftData = SoundService.getFFTData();
         
         if (fftData) {
-            Utils.fftDataToSmallerArray(fftData, barArray);
+            Utils.fftDataToSmallerArrayLogarithmic(fftData, barArray);
 
             const hw = Math.floor(w / 2);
             const hh = Math.floor(h / 2);
@@ -72,9 +72,11 @@ const BarVisualizer = ({options}) => {
             const segments = barArray.length;
             const segWidth = Math.floor(1.25 * hw / segments);
 
+            const s = heightScale ? heightScale : 1;
+
             let xOffset = 0;
             for (let i = 1; i < segments; i++) {
-                const value = Math.max(0, Math.min(barArray[i], 255)) / 255 * hh;
+                const value = s * Math.max(0, Math.min(barArray[i], 255)) / 255 * hh;
                 //ctxt.clearRect(hw - ((i + 1) * segWidth), -value, segWidth, value * 2);
                 const y = hh - value;
                 ctxt.fillStyle = "rgba(0, 0, 0, 1.0)";

@@ -4,6 +4,7 @@ import BlendBgVisualizer from "./visualizers/BlendBgVisualizer";
 import BarVisualizer from "./visualizers/BarVisualizer";
 import ArcVisualizer from "./visualizers/ArcVisualizer";
 import Subscription from "../service/Subscription";
+import NGonVisualizer from "./visualizers/NGonVisualizer";
 
 class VisualizerServiceCls {
     VISUALIZERS = {
@@ -18,6 +19,10 @@ class VisualizerServiceCls {
         ARCS: {
             name: "arcs",
             component: ArcVisualizer,
+        },
+        NGON: {
+            name: "ngon",
+            component: NGonVisualizer,
         },
     };
 

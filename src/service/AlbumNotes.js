@@ -85,6 +85,7 @@ const AlbumNotes = {
     All life on that planet descended from one microscopic single-celled species. And billions of years of environmental hardship and competition for resources led to a vibrant explosion of biodiversity.
     
     Life found a way to exist and thrive in every nook and cranny on that planet.`,
+    canopies: `Much of the species' early history was spent on their planet’s rocky surface. It was a combination of things that transformed their world, their home, into something almost totally uninhabitable. It was a true achievement to leave before they could annihilate themselves.`,
     sapience: `The blue planet produced one of only a few species capable of comprehending and contemplating their own existence, and their place within the universe. Plenty of archives exist from the time that their species was still struggling to leave their home world. Here is one such excerpt:
 
     —
@@ -108,8 +109,6 @@ const AlbumNotes = {
     we are Nothing
     we are Nothing
     —
-    
-    Much of the species' early history was spent on their planet’s rocky surface. It was a combination of things that transformed their world, their home, into something almost totally uninhabitable. It was a true achievement to leave before they could annihilate themselves.
     
     After a time of suffering and hardship, they built ships and left, taking as many people and resources as they could afford to launch out of their planet's massive gravity well.
     

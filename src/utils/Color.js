@@ -76,6 +76,15 @@ export class ColorObj {
         );
     }
 
+    scalarMultiplyAlphaOnly = (scalar) =>{
+        return new Color(
+            this.components[0],
+            this.components[1],
+            this.components[2],
+            this.components[3] * scalar,
+        )
+    }
+
 }
 
 export function Color(r,g,b,a) {

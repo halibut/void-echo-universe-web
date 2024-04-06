@@ -1,6 +1,6 @@
 
 const Constants = {
-  title: "The Universe",
+  title: "EVERYTHING",
   artist: "VOID·ECHO",
   year: 2024,
 

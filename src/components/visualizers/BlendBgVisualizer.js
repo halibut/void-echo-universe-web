@@ -25,7 +25,7 @@ const BlendBgVisualizer = ({options}) => {
     });
     const optsRef = useRef({
         primary: Color(255, 255, 255, .5),
-        secondary: Color(255, 0, 0, 1),
+        secondary: Color(0, 0, 0, .5),
     });
 
     useEffect(() => {

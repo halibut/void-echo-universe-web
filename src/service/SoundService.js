@@ -1,3 +1,4 @@
+import Utils from "../utils/Utils";
 import State from "./State";
 import Subscription from "./Subscription";
 
@@ -249,8 +250,16 @@ class SoundServiceCls {
         //Check to see if any registered time events need to fire
         if (this.nextTimeEventInd < this.timeEvents.length) {
             let nextEvent = this.timeEvents[this.nextTimeEventInd];
-            while (nextEvent && nextEvent.time <= currentTime) {
-                nextEvent.safeHandler(nextEvent.time, currentTime);
+            
+            //The .5 second lead time is because the timeUpdateEvent is only accurate potentially to
+            //the quarter second. So this allows us to schedule with a little more fine-grained timing.
+            while (nextEvent && (nextEvent.time <= currentTime+.5)) {
+                const eventToFire = nextEvent;  //copy this because we reference it in an anyonymous function
+                const tte = eventToFire.time - this.getCurrentTime(); 
+                
+                window.setTimeout(() => {
+                    eventToFire.safeHandler(eventToFire.time, currentTime + tte);
+                }, 1000 * tte);
 
                 if (nextEvent.repeatable === true) {
                     this.nextTimeEventInd++;

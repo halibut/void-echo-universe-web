@@ -39,7 +39,7 @@ const ArcVisualizer = ({options}) => {
     
     const doFrame = (canvas) => {
         const {barArray, w, h, primaryMixMode, secondaryMixMode} = dataRef.current;
-        const {primary, secondary, gradientTimes} = optsRef.current;
+        const {primary, secondary, gradientTimes, heightScale} = optsRef.current;
         const ctxt = canvas.getContext("2d");
 
         if (canvas.width !== w) {
@@ -66,10 +66,12 @@ const ArcVisualizer = ({options}) => {
         const fftData = SoundService.getFFTData();
         
         if (fftData) {
-            Utils.fftDataToSmallerArray(fftData, barArray);
+            Utils.fftDataToSmallerArrayLogarithmic(fftData, barArray);
 
             const hw = Math.floor(w / 2);
             const hh = Math.floor(h / 2);
+
+            const s = heightScale ? heightScale : 1;
 
             const segments = barArray.length;
             const segWidth = Math.floor(Math.max(hw, hh) / segments);
@@ -82,7 +84,7 @@ const ArcVisualizer = ({options}) => {
 
                 const awidth = Math.floor(((1 - ratio) * (1 - ratio)) * segWidth * 3.5);
                 
-                const arcLength = (3.14159 * value / 2);
+                const arcLength = s * (3.14159 * value / 2);
 
                 ctxt.lineWidth = awidth;
 
