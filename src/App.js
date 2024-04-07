@@ -16,6 +16,8 @@ import { createTrackPage } from './pages/TrackPage';
 import SongData from './service/SongData';
 import Utils from './utils/Utils';
 import Credits from './pages/Credits';
+import Title2 from './pages/Title2';
+import MainMenu2 from './pages/MainMenu2';
 
 function createSongScreen(sd) {
   return {
@@ -27,7 +29,7 @@ function createSongScreen(sd) {
 
 const pages = [
   {screen: Splash, title:Constants.title, path: "/"},
-  {screen: Title, title:Constants.title, path:"/title"},
+  {screen: Title2, title:Constants.title, path:"/title"},
   {screen: MainMenu, title:Constants.title+" - Menu", path:"/main"},
   createSongScreen(SongData.track01),
   createSongScreen(SongData.track02),

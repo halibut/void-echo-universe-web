@@ -87,6 +87,7 @@ const SideMenu = ({
 }) => {
     const [open, setOpen] = useState(false);
     const [showCopyMessage, setShowCopyMessage] = useState(false);
+    const [fullscreen, setFullscreen] = useState(!!document.fullscreenElement);
 
     const timeoutRef = useRef(null);
     
@@ -122,6 +123,16 @@ const SideMenu = ({
         e.stopPropagation();
         setOpen(!open);
     };
+    
+    const toggleFullScreen = async () => {
+        if (document.fullscreenElement) {
+            await document.exitFullscreen();
+            setFullscreen(false);
+        } else {
+            await document.getElementById("root").requestFullscreen();
+            setFullscreen(true);
+        }
+    }
 
     if (!open) {
         let additionalClass = "";
@@ -158,6 +169,20 @@ const SideMenu = ({
                 <div> 
                     <ToggleMenuItem optionKey={State.KEYS.ZEN_MODE} optionName={"Zen Mode"} defaultValue={false} />
                 </div>
+                {(document.fullscreenEnabled) && (
+                    <div> 
+                        <div className='' style={{position:'relative', width:'100%'}}>
+                            <div className='option-item' onClick={toggleFullScreen}>
+                                <div className='option-title'>Full Screen</div>
+                                    <div className='option-value'>
+                                    { (document.fullscreenElement) && ( 
+                                        <div className='' style={{width:10, height:10, backgroundColor:"#ddd", borderRadius:5}} />
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
                 <div>
                     <ToggleMenuItem optionKey={State.KEYS.SHOW_NOTES} optionName={"Show Story"} defaultValue={true} />
                 </div>

@@ -28,13 +28,21 @@ const NavScreenContainer = ({
   let additionalStyle = {};
 
   if (isLoadingIn) {
-    additionalClass = "zoom-in-in";
+    if (animOptions?.transitionInClass) {
+      additionalClass = animOptions.transitionInClass;
+    } else {
+      additionalClass = "zoom-in-in";
+    }
     additionalStyle = {
       animationDuration: `${animOptions.time}ms`,
     };
   }
   if (isLoadingOut) {
-    additionalClass = "zoom-in-out";
+    if (animOptions?.transitionOutClass) {
+      additionalClass = animOptions.transitionOutClass;
+    } else {
+      additionalClass = "zoom-in-out";
+    }
     additionalStyle = {
       animationDuration: `${animOptions.time}ms`,
     };

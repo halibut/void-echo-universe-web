@@ -2,21 +2,21 @@
     font-size: 2em;
     font-weight: bold;
     text-align: center;
-    color: #fff;
+    color: var(--light);
 }
 
 h3.title {
     font-size: 1.25em;
     font-weight: bold;
     text-align: center;
-    color: #fff;
+    color: var(--light);
 }
 
 .author {
     font-size: 2em;
     font-weight: bold;
     text-align: center;
-    color: #fff
+    color: var(--light);
 }
 
 .start-button {
@@ -58,6 +58,22 @@ h3.title {
     font-weight: bold;
 }
 
+.track-item2 {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    cursor: pointer;
+    font-weight: normal;
+    font-size: 0.8em;
+    position: absolute;
+    left: 25%;
+    width: 65%;
+}
+
+.track-item2:hover {
+    font-weight: bold;
+}
+
 .suggested-track-ind {
     display: flex;
     height: 100%;
@@ -91,11 +107,11 @@ h3.title {
 .option-item select {
     font-size: 1em;
     background-color: #000;
-    color: #fff;
+    color: var(--light);
 }
 .option-item select option {
     background-color: #000;
-    color: #fff;
+    color: var(--light);
 }
 .option-item:hover {
     font-weight: bold;
@@ -109,7 +125,7 @@ h3.title {
     height: 0.8em;
     border-width: 2px;
     border-style: solid;
-    border-color: #ddd;
+    border-color: var(--light);
     align-items: center;
     justify-content: center;    
 }
@@ -166,7 +182,7 @@ h3.title {
     border-radius: .5em;
     scrollbar-width: 40px;
     font-size: 0.5em;
-    color: #fff;
+    color: var(--light);
     overflow-y: auto;
     scrollbar-color: #fff8 transparent;
 }

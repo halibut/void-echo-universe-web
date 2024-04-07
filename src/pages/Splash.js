@@ -12,7 +12,7 @@ const Splash = ({isLoadingOut, animOptions}) => {
 
   return (
     <div className={'center '+additionalClass} style={style} >
-      <Link className={'fade-in'} path="/title" navOptions={{time:5000}} style={{width:'100%', height:'100%', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', animationDuration:"3000ms"}}>
+      <Link className={'fade-in'} path="/title" navOptions={{time:5000, transitionInClass: "nothing"}} style={{width:'100%', height:'100%', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', animationDuration:"3000ms"}}>
         <div className='column center color-wheel' style={{maxHeight:"50%", maxWidth:"90%", height:500, width:500, position:'relative'}}>
             <img src={require("../images/ve-logo-ring-1.png")} className="logo-spin-r1" style={{width:"100%", height:"100%", objectFit:"contain", position:'absolute'}} alt=""/>
             <img src={require("../images/ve-logo-ring-2.png")} className="logo-spin-r2" style={{width:"100%", height:"100%", objectFit:"contain", position:'absolute'}} alt=""/>

@@ -15,6 +15,7 @@ class StateApi {
             SHOW_VISUALIZER: "show-visual",
             SHOW_NOTES: "show-notes",
             ZEN_MODE: "zen-mode",
+            FULL_SCREEN: "full-screen",
             REPEAT_MODE: "repeat",
             SHOW_IMAGE_ATTRIBUTION: "image-attribution"
         }
