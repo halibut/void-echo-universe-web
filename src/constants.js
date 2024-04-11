@@ -7,7 +7,7 @@ const Constants = {
   NASA_API: "https://images-api.nasa.gov/",
 
   USE_CDN: process.env.REACT_APP_USE_CDN === "true",
-  CDN_ROOT: "http://34.102.200.93/universe/",
+  CDN_ROOT: "https://media.voidechomusic.com/universe/",
 
   BASE_URL: process.env.REACT_APP_BASE_URL,
 
