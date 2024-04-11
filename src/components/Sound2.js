@@ -18,9 +18,14 @@ const SoundElement = ({index, songData}) => {
     const sources = songData.songSources.map(s => {
         return <source key={s.src} src={s.src} type={s.type} />
     });
+
+    const handleError = (e) => {
+        console.error(e);
+        debug(`Error with sound[${index}]: ` +e);
+    }
     
     return (
-        <audio id={`audio-element-${index}`} key={index} ref={handleRef} crossOrigin="anonymous" preload="metadata">
+        <audio id={`audio-element-${index}`} key={index} ref={handleRef} crossOrigin="anonymous" preload="metadata" onError={handleError}>
             {sources}
         </audio>
     );

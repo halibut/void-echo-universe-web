@@ -15,6 +15,7 @@ import AudioControls from "./AudioControls";
 import Visualizer from "./Visualizer";
 import debug, { subscribeDebugMessages } from "./Debug";
 import Utils from "../utils/Utils";
+import State from "../service/State";
 
 const DEFAULT_OPTS = {
   time: 1000,
@@ -112,6 +113,7 @@ function navReducer(state, action) {
 const Navigator = ({ screens, NotFoundPage }) => {
   const [state, dispatch] = useReducer(navReducer, {screenInd: null, loadingScreenInd: null, animOptions: null});
 
+  const [showDebug, setShowDebug] = useState(State.getStateValue(State.KEYS.DEBUG), false);
   const [d, setD] = useState(["debug"]);
 
   const navAnimTimeout = useRef(null);
@@ -160,6 +162,12 @@ const Navigator = ({ screens, NotFoundPage }) => {
   useEffect(() => {
     setDefaultBackground(1000);
 
+    const stateSubscription = State.subscribeToStateChanges(evt => {
+      if (evt.state === State.KEYS.DEBUG) {
+        setShowDebug(evt.value);
+      }
+    })
+
     const printSubscription = subscribeDebugMessages(msg => {
       setD(oldD => {
         const newD = oldD.slice();
@@ -172,6 +180,7 @@ const Navigator = ({ screens, NotFoundPage }) => {
     debug("IOS? "+Utils.isIOS());
 
     return () => {
+      stateSubscription.unsubscribe();
       printSubscription.unsubscribe();
     }
   }, []);
@@ -278,11 +287,13 @@ const Navigator = ({ screens, NotFoundPage }) => {
         <AudioControls />
       </div>
 
-      {/*
-      <div style={{position:'absolute', top:0, left:0, width:'100%', minHeight:50, minWidth:200, maxWidth:"100%", maxHeight:"40%", backdropFilter:"blur(5px)", backgroundColor:"#0003", color:"#fff", overflowY:"auto"}}>
-        {d.map((t, i) => <p key={i}>{t}</p>)}
-      </div>
-      */}
+      { showDebug && (
+        <div style={{position:'absolute', top:40, left:0, width:'100%', minHeight:50, minWidth:200, maxWidth:"100%", maxHeight:"35%", backdropFilter:"blur(5px)", backgroundColor:"#0003", color:"#fff", overflowY:"auto"}}>
+          <button onClick={() => {State.setStateValue(State.KEYS.DEBUG, false)}}>Close Debug Window</button>
+          {d.map((t, i) => <p key={i}>{t}</p>)}
+        </div>
+      )}
+      
 
       {/*<SoundCheck />*/}
     </div>

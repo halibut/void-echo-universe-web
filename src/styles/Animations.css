@@ -423,6 +423,7 @@
     background-color: var(--album-bg);
     align-items: center;
     justify-content: center;
+    backdrop-filter: blur(10px);
 }
 .title-timeline {
     width: 100%;
@@ -452,7 +453,6 @@
 }
 .final .title-cover {
     background-color: color-mix(in srgb, var(--dark) 25%, transparent);
-    backdrop-filter: blur(10px);
 }
 .final .title-timeline {
     opacity: 0;

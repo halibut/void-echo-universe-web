@@ -6,6 +6,7 @@ import { setDefaultBackground } from "../service/BackgroundService";
 import SideMenu from "../components/SideMenu";
 import Constants from "../constants";
 import { VisualizerService } from "../components/Visualizer";
+import State from "../service/State";
 
 
 const Credits = ({isLoadingOut, isLoadingIn, fullyLoaded}) => {
@@ -44,6 +45,8 @@ const Credits = ({isLoadingOut, isLoadingIn, fullyLoaded}) => {
       {fullyLoaded && (
         <SideMenu />
       )}
+
+      <button style={{position:'absolute', right:0, top:100, width:50, height:50, backgroundColor:"#0004", border:"none" }} onClick={() => State.setStateValue(State.KEYS.DEBUG, true)}></button>
       
     </div>
   );

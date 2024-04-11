@@ -273,7 +273,6 @@ const TrackPage = ({
         }
 
         if (SoundService2.isSuspended()) {
-            SoundService2.tryResume();
             SoundService2.play();
             startHidingControls(0);
             return;

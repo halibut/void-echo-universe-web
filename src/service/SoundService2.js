@@ -59,11 +59,15 @@ class SoundService2Cls {
                 data: sd,
                 element: null,
                 mediaSource: null,
+                touchPromise: null,
+                touched: false,
             }
         });
     }
 
-    init = (songs) => {
+    init = () => {
+        debug("Initializing Audio Context...");
+
         try {
             
             this.ac = new AudioContext({latencyHint:'interactive'});
@@ -113,7 +117,9 @@ class SoundService2Cls {
             
         }
         catch(e) {
-            debug("Error initializing AudioContext. Probably awaiting user input event.", e);
+            this.ac = null;
+            debug("Error initializing AudioContext. Probably awaiting user input event." + e);
+            console.error(e);
         }
     };
 
@@ -126,31 +132,60 @@ class SoundService2Cls {
     }
 
     isSuspended = () => {
-        return !this.ac || this.ac.state === 'suspended' || this.ac.state === 'interrupted';
+        //debug("AC state: "+this.ac.state);
+        return this.ac.state !== 'running';
     }
 
-    tryResume = () => {
+    /**
+     * Attempt to initialize the AudioContext and make sure it is not suspended.
+     * Parts of this function may happen synchronously and some may happen asynchronously.
+     * The callback will be called synchronously whenever possible.
+     * @param {*} callback 
+     */
+    tryResume = (callback) => {
 
         //Some browsers won't let us set up an AudioContext at all until the user
         //has provided an input event. So this detects this case and tries to re-initialize
         if(!this.ac) {
             this.init();
+            if (!this.ac) {
+                debug("Wow, AudioContext init unsuccessful.");
+                return;
+            }
         }
 
         //If the AudioContext is suspended, then try to resume it. 
         if(this.isSuspended()) {
-            debug("Sound AudioContext suspended. Trying to resume.")
             try {
-                this.ac.resume();
-                
-                return true;
-            }
-            catch(e) {
-                debug("Error resuming audio context.", e);
-                return false;
+                debug("Sound AudioContext suspended. Trying to resume.")
+                const resumePromise = this.ac.resume();
+                if (/*!Utils.isIOS() &&*/ resumePromise) {
+                    resumePromise.then(() => {
+                        debug("AudioContext resumed.");
+                        if (callback) {
+                            callback(true);
+                        }
+                    }).catch((e) => {
+                        debug("AudioContext could not be resumed."+e);
+                        console.error(e);
+                        if (callback) {
+                            callback(false);
+                        }
+                    });
+                } else {
+                    debug("No resume promise, or we're on IOS!");
+                    if (callback) {
+                        callback(true);
+                    }
+                }
+            } catch (e) {
+                debug("Error attempting to resume AudioContext."+e);
+                console.error(e);
             }
         } else {
-            return true;
+            if (callback) {
+                callback(true);
+            }
         }
     }
 
@@ -159,36 +194,78 @@ class SoundService2Cls {
         debug("Song["+index+"] registered.");
     }
 
-    touchSound = (source) => {
-        if (!this.ac) {
-            this.init();    
-        }
-
+    /**
+     * Attempt to initialize the specified sound and prepare it for automated control.
+     * Some aspects of initialization are asynchronous, hence the callback. We'd use promises,
+     * except that IOS isn't good about propagating user click events to the play method 
+     * of the html element. So the callback is only called asynchronously if strictly necessary.
+     * Most of the time it will execute synchronously.
+     * 
+     * Initial play() of the sound element is always synchronous, as it's attempted before 
+     * trying to initialize the AudioContext
+     * @param {*} source 
+     * @param {*} callback 
+     */
+    touchSound = (source, callback) => {
+        //Special case for IOS, just always try to resume
+        this.tryResume();
+        
         const index = this.soundElements.findIndex(s => s.data.songSources === source);
 
-        if (this.activeIndex === index) {
-            debug("Same sound touched.");
-            return;
-        } else {
-            debug("New sound touched.");
+        const soundData = this.soundElements[index];
+        const element = soundData?.element;
+
+        if (!element) {
+            debug("Sound element not loaded yet.");
+            if (callback) {
+                callback(false);
+            }
+            return
         }
 
-        const element = this.soundElements[index]?.element;
+        if (soundData.touched) {
+            debug("Sound element already touched.");
+            if (callback) {
+                callback(true);
+            }
 
-        //Tell the browser to play and then immediately pause the song, which
-        //sort of forces it to enable the sound for automating later
-        if (element) {
-            //element.load();
+        } else if (soundData.touchPromise) {
+            debug("Sound element waiting for touched status to change to true.");
+            if (callback) {
+                soundData.touchPromise.then(() => {
+                    callback(true);
+                }).catch(e => {
+                    callback(false);
+                });
+            }
+
+        } else {
+            debug("Initializing touch.");
             element.volume = 0;
             element.muted = true;
-            const playPromise = element.play();
+            soundData.touchPromise = element.play();
 
-            if (playPromise) {
-                playPromise.then(() => {
+            if (soundData.touchPromise) {
+                soundData.touchPromise.then(() => {
+                    debug("touch played");
                     element.pause();
+                    soundData.touched = true;
+                    soundData.touchPromise = null;
+                    
+                    if (callback) {
+                        callback(true);
+                    }    
                 }).catch((e) => {
                     console.log("Error touching audio element.", e);
+                    soundData.touchPromise = null;
+                    if (callback) {
+                        callback(false);
+                    }
                 });
+            } else {
+                if (callback) {
+                    callback(true);
+                }    
             }
         }
     }
@@ -203,34 +280,33 @@ class SoundService2Cls {
      * @returns 
      */
     setSound = (source, options) => {
-        if (!this.ac) {
-            this.init();    
-        }
-        //await this.tryResume();
+        debug("Attempting to set the sound.");
+        //touchSound initializes the sound and makes sure it can play before calling our callback
+        //function
+        this.touchSound(source, (touchSuccessful) => {
+            debug("Init touch successful: "+touchSuccessful);
 
-        const index = this.soundElements.findIndex(s => s.data.songSources === source);
+            const index = this.soundElements.findIndex(s => s.data.songSources === source);
 
-        if (this.activeIndex === index) {
-            debug("Same sound requested.");
-            return;
-        } else {
-            debug("new sound requested.");
-        }
+            if (this.activeIndex === index) {
+                debug("Same sound requested.");
+                return;
+            } else {
+                debug("new sound requested.");
+            }
 
-        this.soundElements[index].element.play();
-        this.soundElements[index].element.pause();
+            const playNewSong = () => {
+                this.loadFromAudioElement(index, options);
+            }
 
-        const playNewSong = () => {
-            this.loadFromAudioElement(index, options);
-        }
-
-        if (/*!Utils.isIOS() && */this.activeIndex >= 0 && options?.fadeOutBeforePlay && options.fadeOutBeforePlay > 0) {
-            this.fadeOut(options.fadeOutBeforePlay);
-            window.setTimeout(playNewSong, (1000 * options.fadeOutBeforePlay)+50);
-        }
-        else {
-            playNewSong();
-        }
+            if (/*!Utils.isIOS() && */this.activeIndex >= 0 && options?.fadeOutBeforePlay && options.fadeOutBeforePlay > 0) {
+                this.fadeOut(options.fadeOutBeforePlay);
+                window.setTimeout(playNewSong, (1000 * options.fadeOutBeforePlay)+50);
+            }
+            else {
+                playNewSong();
+            }
+        });
     };
 
     _handleReadyToPlay = () => {
@@ -501,8 +577,13 @@ class SoundService2Cls {
     };
 
     play = () => {
+        if (this.ac) {
+            this.ac.resume();
+        }
         const element = this.getAudioElement();
         if (element) {
+            element.muted = false;
+            element.volume = 1;
             element.play();
         }
     }

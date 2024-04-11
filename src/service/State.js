@@ -17,7 +17,8 @@ class StateApi {
             ZEN_MODE: "zen-mode",
             FULL_SCREEN: "full-screen",
             REPEAT_MODE: "repeat",
-            SHOW_IMAGE_ATTRIBUTION: "image-attribution"
+            SHOW_IMAGE_ATTRIBUTION: "image-attribution",
+            DEBUG: "debug-mode",
         }
 
         const appStateStr = localStorage.getItem("app-state");
