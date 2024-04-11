@@ -8,7 +8,7 @@ function getSongURL(fileName) {
     if (Constants.USE_CDN === true) {
         return `${Constants.CDN_ROOT}${fileName}`;
     } else {
-        return require(`../sounds/${fileName}`);
+        return `${process.env.PUBLIC_URL}/sounds/${fileName}`;
     }
 }
 
