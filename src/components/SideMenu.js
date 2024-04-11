@@ -13,6 +13,8 @@ import State from "../service/State";
 import { useEffect, useRef, useState } from "react";
 import Constants from "../constants";
 import Utils from "../utils/Utils";
+import SoundService2 from "../service/SoundService2";
+import SongData from "../service/SongData";
 
 const ToggleMenuItem = ({
     optionName,
@@ -123,7 +125,7 @@ const SideMenu = ({
         e.stopPropagation();
         setOpen(!open);
     };
-    
+
     const toggleFullScreen = async () => {
         if (document.fullscreenElement) {
             await document.exitFullscreen();
@@ -132,6 +134,10 @@ const SideMenu = ({
             await document.getElementById("root").requestFullscreen();
             setFullscreen(true);
         }
+    }
+
+    const prepareAmbientSound = () => {
+        SoundService2.touchSound(SongData.track00.songSources);
     }
 
     if (!open) {
@@ -158,7 +164,7 @@ const SideMenu = ({
                     </button>
                 </div>
                 <div>
-                    <Link className="menu-link" path="/main">
+                    <Link className="menu-link" path="/main" beforeNavigation={prepareAmbientSound}>
                         <span style={{paddingLeft:0}}>Main Menu</span>
                     </Link>
                 </div>
@@ -213,7 +219,7 @@ const SideMenu = ({
                             <span className="menu-title">Share Song</span>
                         </div>
                         <div >
-                            <Link className="menu-link" path={Constants.BASE_URL+"/"+Utils.trackNameToPath(songData.title)} overrideOnClick={copyURL} >
+                            <Link className="menu-link" path={Constants.BASE_URL+Utils.trackNameToPath(songData.title)} overrideOnClick={copyURL} >
                                 <FiShare />
                                 <span>Copy URL</span>
                                 {showCopyMessage && (
@@ -293,7 +299,7 @@ const SideMenu = ({
                 </div>
                 <div className="divider" />
                 <div >
-                    <Link className="menu-link" path="/credits" >
+                    <Link className="menu-link" path="/credits" beforeNavigation={prepareAmbientSound} >
                         <span style={{paddingLeft:0}}>Credits</span>
                     </Link>
                 </div>

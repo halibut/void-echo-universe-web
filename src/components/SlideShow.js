@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef } from "react";
-import SoundService from "../service/SoundService";
+import SoundService2 from "../service/SoundService2";
 import State from "../service/State";
 import NasaImagesApi from "../service/NasaImagesApi";
 import BackgroundService from "../service/BackgroundService";
@@ -99,7 +99,7 @@ const SlideShow = ({songData, onLoadImageMetadata}) => {
 
                     startSlideshow();
                 }
-                SoundService.registerTimeEvent(i.time, setBgImages, true, true);
+                SoundService2.registerTimeEvent(i.time, setBgImages, true, true);
             })
         }
 

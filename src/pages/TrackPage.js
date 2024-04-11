@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState} from "react";
-import SoundService from "../service/SoundService";
+import SoundService2 from "../service/SoundService2";
 import State from "../service/State";
 import Utils from "../utils/Utils";
 import SlideShow from "../components/SlideShow";
@@ -43,7 +43,7 @@ const TrackPage = ({
     const [showNotes, setShowNotes] = useState(State.getStateValue(State.KEYS.SHOW_NOTES, true));
     const [showControls, setShowControls] = useState(false);
     const [showImageAttribution, setShowImageAttribution] = useState(State.getStateValue(State.KEYS.SHOW_IMAGE_ATTRIBUTION, false));
-    const [paused, setPaused] = useState(SoundService.isPaused() || SoundService.isSuspended());
+    const [paused, setPaused] = useState(SoundService2.isPaused() || SoundService2.isSuspended());
     const [fadingControls, setFadingControls] = useState(false);
     const [repeatMode, setRepeatMode] = useState(State.getStateValue(State.KEYS.REPEAT_MODE));
 
@@ -59,7 +59,12 @@ const TrackPage = ({
             e.stopPropagation();
             e.preventDefault();
         }
-        const prevURL = Utils.calculatePreviousSongPage(songData, false);
+        const repeatAlbum = State.getStateValue(State.KEYS.REPEAT_MODE, "none") === "album";
+        const sd = Utils.findPreviousSongData(songData, repeatAlbum);
+        if (sd) {
+            SoundService2.touchSound(sd.songSources);
+        }
+        const prevURL = Utils.calculatePreviousSongPage(songData, repeatAlbum);
         setLocation(prevURL);
     }, [songData]);
 
@@ -68,7 +73,12 @@ const TrackPage = ({
             e.stopPropagation();
             e.preventDefault();
         }
-        const nextURL = Utils.calculateNextSongPage(songData, false);
+        const repeatAlbum = State.getStateValue(State.KEYS.REPEAT_MODE, "none") === "album";
+        const sd = Utils.findNextSongData(songData, repeatAlbum);
+        if (sd) {
+            SoundService2.touchSound(sd.songSources);
+        }
+        const nextURL = Utils.calculateNextSongPage(songData, repeatAlbum);
         setLocation(nextURL);
     }, [songData]);
 
@@ -86,7 +96,7 @@ const TrackPage = ({
                     const setVisualizer = () => {
                         VisualizerService.setVisualizer(v.viz.name, v.options);
                     }
-                    SoundService.registerTimeEvent(v.time, setVisualizer, true, true);
+                    SoundService2.registerTimeEvent(v.time, setVisualizer, true, true);
                 });
             }
 
@@ -99,7 +109,7 @@ const TrackPage = ({
         //Play the song for this track
         State.setStateValue(State.KEYS.CURRENT_TRACK, songData.trackNumber);
         //console.log("Setting sound: " + JSON.stringify(songData.title));
-        SoundService.setSound(songData.songSources, {
+        SoundService2.setSound(songData.songSources, {
             play:true,
             fadeOutBeforePlay: 2,
             loop: State.getStateValue(State.KEYS.REPEAT_MODE, "none") === "track",
@@ -107,20 +117,22 @@ const TrackPage = ({
 
         VisualizerService.setVisualizer(VisualizerService.VISUALIZERS.BLEND_BG.name);
 
-        const soundEventSub = SoundService.subscribeEvents((e) => {
+        const soundEventSub = SoundService2.subscribeEvents((e) => {
             switch (e.event) {
-                case SoundService.EVENTS.WARN_30_SECONDS_REMAINING: {
+                case SoundService2.EVENTS.WARN_30_SECONDS_REMAINING: {
                         //Start loading the next track if we get near the end of this one
                         const repeatMode = State.getStateValue(State.KEYS.REPEAT_MODE, "none");
                         if (repeatMode !== "track") {
                             const nextSong = Utils.findNextSongData(songData, repeatMode === "album");
                             if (nextSong) {
-                                SoundService.queueSound(nextSong.songSources, {play: true});
+                                SoundService2.touchSound(nextSong.songSources);
                             }
                         }
                     }
                     break;
-                case SoundService.EVENTS.WARN_1_SECOND_REMAINING: {
+                case SoundService2.EVENTS.WARN_1_SECOND_REMAINING: 
+                    //On desktop platforms, attempt to queue up the next song so it plays more seamlessly
+                    if (!Utils.isIOS()) {
                         const time = Math.floor(Math.min(1000, Math.max(e.timeRemaining, 0) * 1000 - 50));
                         //Set short timeout to play the next track if we get to the end of this one
                         const repeatMode = State.getStateValue(State.KEYS.REPEAT_MODE, "none");
@@ -129,24 +141,44 @@ const TrackPage = ({
                             nextTrackTimeoutRef.current = window.setTimeout(() => {
                                 const nextSong = Utils.findNextSongData(songData, repeatMode === "album");
                                 if (nextSong) {
-                                    SoundService.setSound(nextSong.songSources, {play: true});
+                                    SoundService2.setSound(nextSong.songSources, {play: true});
                                     nextTrackTimeoutRef.current = null;
                                 }
                                 goToNext();
                             }, time);
                         } else {
                             window.setTimeout(() => {
-                                SoundService.seekTo(0);
-                                SoundService.play();
-                                SoundService.resetTimeEventsToStart();
+                                SoundService2.seekTo(0);
+                                SoundService2.play();
+                                SoundService2.resetTimeEventsToStart();
                             }, time);
                         }
                     }
                     break;
-                case SoundService.EVENTS.PLAYING: 
+                case SoundService2.EVENTS.ENDED: 
+                    //On IOS, we can only start playback of the next song from a user interaction or 
+                    //from the "ended" event. This code block is essentially fired within the context
+                    //of the "ended" event which allows the next song to play on IOS.
+                    if (Utils.isIOS()) {
+                        const repeatMode = State.getStateValue(State.KEYS.REPEAT_MODE, "none");
+                        if (repeatMode !== "track") {
+                            const nextSong = Utils.findNextSongData(songData, repeatMode === "album");
+                            if (nextSong) {
+                                SoundService2.setSound(nextSong.songSources, {play: true});
+                                nextTrackTimeoutRef.current = null;
+                            }
+                            goToNext();
+                        } else {
+                            SoundService2.seekTo(0);
+                            SoundService2.play();
+                            SoundService2.resetTimeEventsToStart();
+                        }
+                    }
+                    break;
+                case SoundService2.EVENTS.PLAYING: 
                     setPaused(false);
                     break;
-                case SoundService.EVENTS.PAUSED:
+                case SoundService2.EVENTS.PAUSED:
                     setPaused(true);
                     if (controlsTimeoutRef.current) {
                         window.clearTimeout(controlsTimeoutRef.current);
@@ -154,7 +186,7 @@ const TrackPage = ({
                     }
                     setShowControls(true);
                     break;
-                case SoundService.EVENTS.CAN_PLAY_THROUGH:
+                case SoundService2.EVENTS.CAN_PLAY_THROUGH:
                     registerTimeEvents();
                     break;
                 default:
@@ -240,17 +272,17 @@ const TrackPage = ({
             e.stopPropagation();
         }
 
-        if (SoundService.isSuspended()) {
-            SoundService.tryResume();
-            SoundService.play();
+        if (SoundService2.isSuspended()) {
+            SoundService2.tryResume();
+            SoundService2.play();
             startHidingControls(0);
             return;
         }
 
-        if (SoundService.isPaused()) {
-            SoundService.play();
+        if (SoundService2.isPaused()) {
+            SoundService2.play();
         } else {
-            SoundService.pause();
+            SoundService2.pause();
         }
     }, [startHidingControls]);
 
@@ -323,7 +355,7 @@ const TrackPage = ({
 
             {imageAttribution}
 
-            { (showControls) && (
+            { (SoundService2.isSuspended() || showControls) && (
                 <div key="controls" className={"track-controls "+ (fadingControls ? "fade-out" : "fade-in")} style={{animationDuration:"250ms"}} onClick={toggleControls}>
                     <div className="row" style={{width: "100%", maxWidth: 800, justifyContent:"space-around", margin:20}}>
                         <button type="button" onClick={goToPrevious}>

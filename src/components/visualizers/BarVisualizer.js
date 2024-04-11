@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef } from "react"
-import Sound from "../Sound";
-import SoundService from "../../service/SoundService";
+import SoundService2 from "../../service/SoundService2";
 import Utils from "../../utils/Utils";
 import Canvas from "../Canvas";
 import { Color } from "../../utils/Color";
@@ -52,7 +51,7 @@ const BarVisualizer = ({options}) => {
         ctxt.clearRect(0, 0, w, h);
 
         //Calculate gradient colors if we have any 
-        const songPos = SoundService.getCurrentTime();
+        const songPos = SoundService2.getCurrentTime();
         const tx = gradientTimes ? ( songPos - gradientTimes[0]) / ( gradientTimes[1] - gradientTimes[0]) : 0;
 
         const pc = primary.getGradientColor(tx);
@@ -61,7 +60,7 @@ const BarVisualizer = ({options}) => {
         ctxt.fillStyle = sc.getRGBAColorString();
         ctxt.fillRect(0, 0, w, h);
         
-        const fftData = SoundService.getFFTData();
+        const fftData = SoundService2.getFFTData();
         
         if (fftData) {
             Utils.fftDataToSmallerArrayLogarithmic(fftData, barArray);

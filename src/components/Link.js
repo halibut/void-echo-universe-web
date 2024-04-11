@@ -1,18 +1,26 @@
 import { useCallback } from "react";
 import { handleAnchorNav } from "../contexts/location-context";
+import Utils from "../utils/Utils";
 
 
-const Link = ({path, foreign, navOptions, style, className, children, overrideOnClick}) => {
+
+const Link = ({path, foreign, navOptions, style, className, children, overrideOnClick, beforeNavigation}) => {
 
     const handleClick = useCallback((evt) => {
         evt.preventDefault();
+
+        //This is basically a hack for IOS to allow us to interact with an audio element during the user's
+        //onclick event, which enables the sound to be automated later by other parts of the app
+        if (beforeNavigation) {
+            beforeNavigation();
+        }
 
         if (overrideOnClick) {
             overrideOnClick();
         } else {
             handleAnchorNav(path, navOptions);
         }
-    }, [path, navOptions, overrideOnClick]);
+    }, [path, navOptions, overrideOnClick, beforeNavigation]);
 
     const additionalProps = {};
 
@@ -31,9 +39,11 @@ const Link = ({path, foreign, navOptions, style, className, children, overrideOn
         additionalProps.target = "_blank";
     }
 
+
     return (
         <a href={path} {...additionalProps} >{children}</a>
     );
+
 };
 
 export default Link;

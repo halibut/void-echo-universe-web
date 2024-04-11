@@ -1,8 +1,12 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import ReactDOM from 'react-dom';
 import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
+import SoundService2 from './service/SoundService2';
+import SongData from './service/SongData';
+
+SoundService2.setSongData(SongData);
 
 ReactDOM.render(
   <React.StrictMode>

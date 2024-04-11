@@ -4,14 +4,17 @@ import {
   useCallback,
   useEffect,
   useReducer,
+  useState,
 } from "react";
 
 import LocationContext from "../contexts/location-context";
 import { setDefaultBackground } from "../service/BackgroundService";
 import Background from "../components/Background";
-import Sound from "./Sound";
+import Sound2 from "./Sound2";
 import AudioControls from "./AudioControls";
 import Visualizer from "./Visualizer";
+import debug, { subscribeDebugMessages } from "./Debug";
+import Utils from "../utils/Utils";
 
 const DEFAULT_OPTS = {
   time: 1000,
@@ -70,7 +73,7 @@ function navReducer(state, action) {
 
     if (newInd === screenInd) {
       if (newInd >= 0) {
-        console.log(`Navigating to same screen: ${screens[newInd].path}`);
+        debug(`Navigating to same screen: ${screens[newInd].path}`);
       }
       return state;
     }
@@ -109,6 +112,8 @@ function navReducer(state, action) {
 const Navigator = ({ screens, NotFoundPage }) => {
   const [state, dispatch] = useReducer(navReducer, {screenInd: null, loadingScreenInd: null, animOptions: null});
 
+  const [d, setD] = useState(["debug"]);
+
   const navAnimTimeout = useRef(null);
   
   const location = useContext(LocationContext);
@@ -145,7 +150,7 @@ const Navigator = ({ screens, NotFoundPage }) => {
 
   useEffect(() => {
     if (location && location.path !== null) {
-      console.log("Got Navigation change: "+JSON.stringify(location));
+      debug("Got Navigation change: "+JSON.stringify(location));
       const {path, navOptions} = location;
       killTransition(path);
       startTransition(path, navOptions);
@@ -154,6 +159,21 @@ const Navigator = ({ screens, NotFoundPage }) => {
 
   useEffect(() => {
     setDefaultBackground(1000);
+
+    const printSubscription = subscribeDebugMessages(msg => {
+      setD(oldD => {
+        const newD = oldD.slice();
+        newD.unshift(msg);
+        newD.splice(20, 20);
+        return newD;
+      });
+    })
+
+    debug("IOS? "+Utils.isIOS());
+
+    return () => {
+      printSubscription.unsubscribe();
+    }
   }, []);
 
   const {
@@ -241,7 +261,7 @@ const Navigator = ({ screens, NotFoundPage }) => {
     <div className="main-nav">
       <Background key="bg" />
       <Visualizer key="viz" />
-      <Sound key="sound" />
+      <Sound2 key="sound" />
 
       {comps}
 
@@ -257,6 +277,12 @@ const Navigator = ({ screens, NotFoundPage }) => {
       >
         <AudioControls />
       </div>
+
+      {/*
+      <div style={{position:'absolute', top:0, left:0, width:'100%', minHeight:50, minWidth:200, maxWidth:"100%", maxHeight:"40%", backdropFilter:"blur(5px)", backgroundColor:"#0003", color:"#fff", overflowY:"auto"}}>
+        {d.map((t, i) => <p key={i}>{t}</p>)}
+      </div>
+      */}
 
       {/*<SoundCheck />*/}
     </div>

@@ -16,7 +16,7 @@ const VIZ = VisualizerService.VISUALIZERS;
 
 const SongData = {
     track00: {
-        title: "",
+        title: "ambient",
         songSources: [
             {src: getSongURL("ambient.mp3"), type:"audio/mpeg"},
             {src: getSongURL("ambient.ogg"), type:"audio/ogg"}

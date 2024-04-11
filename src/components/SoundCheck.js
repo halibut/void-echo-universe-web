@@ -1,24 +1,33 @@
+import { useEffect, useState } from "react";
 import Constants from "../constants";
+import SoundService2 from "../service/SoundService2";
 
-const Splash = ({nav}) => {
+const SoundCheck = ({onEnabled}) => {
+  const [suspended, setSuspended] = useState(false);
 
-    const next = () => {
-      nav.navTo("/title", {time:10000});
+  useEffect(() => {
+    if (SoundService2.isSuspended()) {
+      setSuspended(true);
     }
-  
+  }, []);
+
+  if (!suspended) {
+    return null;
+  } else {
     return (
-      <div className='center' style={{flex:1, width:'100%'}}>
+      <div style={{position:'absolute', backdropFilter:"blur(5px)", backgroundColor:"#0003",}}>
         <div style={{maxWidth:400}}>
           <p>
             <span style={{fontWeight:'bold'}}>{Constants.title} </span>
              is a music experience. Before proceding, you must enable sounds.
           </p>
-          <button className='start-button' onClick={next}>
+          <button className='start-button' onClick={onEnabled}>
             <span>Enable</span>
           </button>
         </div>
       </div>
     );
-  };
+  }
+}
   
-  export default Splash;
+export default SoundCheck;

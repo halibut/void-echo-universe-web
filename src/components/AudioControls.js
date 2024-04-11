@@ -7,13 +7,13 @@ import {
   IoVolumeLow,
 } from "react-icons/io5";
 
-import SoundService from "../service/SoundService";
+import SoundService2 from "../service/SoundService2";
 import Utils from "../utils/Utils";
 import State from "../service/State";
 
 const VolumeControl = ({uiExpanded}) => {
-  const [muted, setMuted] = useState(SoundService.isMuted());
-  const [vol, setVol] = useState(SoundService.getVolume());
+  const [muted, setMuted] = useState(SoundService2.isMuted());
+  const [vol, setVol] = useState(SoundService2.getVolume());
   const [expanded, setExpanded] = useState(false);
 
   const onHover = (e) => {
@@ -27,10 +27,10 @@ const VolumeControl = ({uiExpanded}) => {
   const onChangeVol = (e) => {
     const newVol = e.target.value * 0.01;
 
-    SoundService.setVolume(newVol);
+    SoundService2.setVolume(newVol);
     setVol(newVol);
     if (muted) {
-      SoundService.setMuted(false);
+      SoundService2.setMuted(false);
       setMuted(false);
     }
   };
@@ -39,7 +39,7 @@ const VolumeControl = ({uiExpanded}) => {
     e.preventDefault();
 
     const newVal = !muted;
-    SoundService.setMuted(newVal);
+    SoundService2.setMuted(newVal);
     setMuted(newVal);
   };
 
@@ -93,13 +93,13 @@ const PositionControl = ({uiExpanded}) => {
   const updateRef = useRef(null);
 
   useEffect(() => {
-    const soundEventSub = SoundService.subscribeEvents((e) => {
+    const soundEventSub = SoundService2.subscribeEvents((e) => {
       switch(e.event) {
-        case SoundService.EVENTS.PLAYING:
-          setPos(SoundService.getCurrentTime());
+        case SoundService2.EVENTS.PLAYING:
+          setPos(SoundService2.getCurrentTime());
           break;
-        case SoundService.EVENTS.SEEKED:
-          setPos(SoundService.getCurrentTime());
+        case SoundService2.EVENTS.SEEKED:
+          setPos(SoundService2.getCurrentTime());
           break;
         default:
           //nothing
@@ -114,7 +114,7 @@ const PositionControl = ({uiExpanded}) => {
 
   useEffect(() => {
     updateRef.current = window.setInterval(() => {
-      setPos(SoundService.getCurrentTime());
+      setPos(SoundService2.getCurrentTime());
     }, 100);
 
     return () => {
@@ -139,7 +139,7 @@ const PositionControl = ({uiExpanded}) => {
     const xPos = e.clientX;
 
     const ratio = xPos / divWidth;
-    const secs = Math.floor(SoundService.getDuration() * ratio);
+    const secs = Math.floor(SoundService2.getDuration() * ratio);
 
     setHoverTime({
       time: Utils.formatSeconds(secs),
@@ -155,13 +155,13 @@ const PositionControl = ({uiExpanded}) => {
 
     const ratio = xPos / divWidth;
 
-    SoundService.seekTo(SoundService.getDuration() * ratio);
+    SoundService2.seekTo(SoundService2.getDuration() * ratio);
   }, []);
 
   if (pos < 0) {
     return null;
   } else {
-    const duration = SoundService.getDuration();
+    const duration = SoundService2.getDuration();
 
     let hoverTimeText = null;
     let posTimeText = null;

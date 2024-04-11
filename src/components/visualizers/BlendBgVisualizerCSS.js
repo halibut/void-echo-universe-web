@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef } from "react"
-import Sound from "../Sound";
-import SoundService from "../../service/SoundService";
+import SoundService2 from "../../service/SoundService2";
 import Utils from "../../utils/Utils";
 
 
@@ -20,10 +19,10 @@ const BlendBgVisualizer = () => {
         const doFrame = () => {
             if (elemRef.current) {
                 const elm = elemRef.current;
-                const fftData = SoundService.getFFTData();
+                const fftData = SoundService2.getFFTData();
     
                 if (fftData) {
-                    const {low, mid, high} = Utils.getFreqRangeAmounts(fftData, SoundService.getSampleRate(), LOW_FREQ, HIGH_FREQ);
+                    const {low, mid, high} = Utils.getFreqRangeAmounts(fftData, SoundService2.getSampleRate(), LOW_FREQ, HIGH_FREQ);
     
                     elm.style.setProperty("--low", low * LOW_MULTIPLIER);
                     elm.style.setProperty("--mid", mid * MID_MULTIPLIER);

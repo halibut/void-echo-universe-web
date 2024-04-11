@@ -140,13 +140,13 @@ const AlbumNotes = {
 
     It could be said that the most interesting thing to ever happen in the universe, did so before it could even be measured.
     
-    Gravity is a curvature in spacetime. Before gravity existed as a distinct force, it's difficult to know if time itself worked the way we know it does today.
+    Gravity is a curvature in spacetime. Before gravity existed as a distinct force, it's difficult to know if time worked the same as we observe now.
     
     What is known is that, within the first Planck time, everything that would ever exist and everything that would ever happen in the universe was set in motion.
     
     —
     
-    The expansion of the univers will continue forever. The stars will eventually burn through their fuel, and the night sky will become dark and cold.
+    The expansion of the universe will continue forever. The stars will eventually burn through their fuel, and the night sky will become dark and cold.
     
     Black holes will remain for a long time. A timeline too massive to comprehend for a species born into such a young universe. But even the black holes will radiate away, evaporating into nothing. It will be 10^100 years or more for the largest ones.
     

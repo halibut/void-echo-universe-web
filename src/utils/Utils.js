@@ -215,6 +215,21 @@ class UtilsApi {
       return this.trackNameToPath(SongList[curPageIndex-1].title)
     }
   }
+  findPreviousSongData = (songData, repeat) => {
+    const curSongIndex = SongList.findIndex(song => {
+      return song.title === songData.title;
+    });
+  
+    if (curSongIndex === 0) {
+      if (repeat) {
+        return SongList[SongList.length - 1];
+      } else {
+        return null;
+      }
+    } else {
+      return SongList[curSongIndex-1];
+    }
+  }
   findNextSongData = (songData, repeat) => {
     const curSongIndex = SongList.findIndex(song => {
       return song.title === songData.title;
@@ -262,6 +277,19 @@ class UtilsApi {
 
       return array;
     }
+  }
+
+  isIOS() {
+    return [
+      'iPad Simulator',
+      'iPhone Simulator',
+      'iPod Simulator',
+      'iPad',
+      'iPhone',
+      'iPod'
+    ].includes(navigator.platform)
+    // iPad on iOS 13 detection
+    || (navigator.userAgent.includes("Mac") && "ontouchend" in document)
   }
 
 }

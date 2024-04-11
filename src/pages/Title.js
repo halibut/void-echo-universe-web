@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef } from "react";
 import Constants from "../constants";
-import SoundService from "../service/SoundService";
+import SoundService2 from "../service/SoundService2";
 import SongData from "../service/SongData";
 import { setLocation } from "../contexts/location-context";
 import { setDefaultBackground } from "../service/BackgroundService";
@@ -34,7 +34,7 @@ const Title = ({fullyLoaded}) => {
     }, [next, fullyLoaded]);
 
     useEffect(() => {
-        SoundService.setSound(SongData.track00.songSources, {play:true, loop:true, fadeOutBeforePlay: 2});
+        SoundService2.setSound(SongData.track00.songSources, {play:true, loop:true, fadeOutBeforePlay: 2});
   
         setDefaultBackground(3000);
 

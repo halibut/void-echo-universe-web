@@ -1,7 +1,7 @@
-import Utils from "../utils/Utils";
 import State from "./State";
 import Subscription from "./Subscription";
 import debug from "../components/Debug";
+import Utils from "../utils/Utils";
 
 const AudioContext = window.AudioContext || window.webkitAudioContext;
 
@@ -22,19 +22,16 @@ const READY_STATES = {
     CAN_PLAY_THROUGH: 4
 };
 
-class SoundServiceCls {
+class SoundService2Cls {
 
-    constructor() {
+    constructor(songs) {
         this.soundSubscribers = new Subscription("sound-subs");
         this.eventSubscribers = new Subscription("sound-events");
         this.enabledSubscribers = new Subscription("ac-enabled-subs");
 
-        this.audioChangeHandler = null;
-        this.sound = null;
-        this.soundElement = null;
-
-        this.queuedAudioChangeHandler = null;
-        this.queuedSound = null;
+        this.activeIndex = -1;
+        this.options = {};
+        this.soundElements =[];
 
         this.timeEvents = []
         this.nextTimeEventInd = 0;
@@ -47,13 +44,26 @@ class SoundServiceCls {
             SEEKED: "seeked",
             PLAYING: "playing",
             PAUSED: "paused",
+            ENDED: "ended",
             SOUND_MOUNTED: "soundmounted",
         }
 
         this.init();
     }
 
-    init = () => {
+    setSongData = (songData) => {
+       this.soundElements = Object.keys(songData).map(k => {
+            const sd = songData[k];
+            return {
+                title: sd.title,
+                data: sd,
+                element: null,
+                mediaSource: null,
+            }
+        });
+    }
+
+    init = (songs) => {
         try {
             
             this.ac = new AudioContext({latencyHint:'interactive'});
@@ -72,7 +82,6 @@ class SoundServiceCls {
                 this.gainNode.gain.linearRampToValueAtTime(lastVol, this.ac.currentTime + 0.1);
             }
 
-
             //Create a FFT/analyser node.
             //Will provide FFT analysis for all sounds passed through
             //the target node, before final volume controls
@@ -83,7 +92,6 @@ class SoundServiceCls {
             this.fftNode.connect(this.gainNode);
 
             debug("FFT Buffer: "+bufferLength);
-
 
             //Create a node that we can connect audio media to
             //It's just a convenient node that we can attach other 
@@ -121,7 +129,7 @@ class SoundServiceCls {
         return !this.ac || this.ac.state === 'suspended' || this.ac.state === 'interrupted';
     }
 
-    tryResume = async () => {
+    tryResume = () => {
 
         //Some browsers won't let us set up an AudioContext at all until the user
         //has provided an input event. So this detects this case and tries to re-initialize
@@ -133,9 +141,9 @@ class SoundServiceCls {
         if(this.isSuspended()) {
             debug("Sound AudioContext suspended. Trying to resume.")
             try {
-                await this.ac.resume();
+                this.ac.resume();
                 
-                return this.ac.state === 'running';
+                return true;
             }
             catch(e) {
                 debug("Error resuming audio context.", e);
@@ -143,6 +151,37 @@ class SoundServiceCls {
             }
         } else {
             return true;
+        }
+    }
+
+    registerElement = (element, index) => {
+        this.soundElements[index].element = element;
+        debug("Song["+index+"] registered.");
+    }
+
+    touchSound = (source) => {
+        if (!this.ac) {
+            this.init();    
+        }
+
+        const index = this.soundElements.findIndex(s => s.data.songSources === source);
+
+        if (this.activeIndex === index) {
+            debug("Same sound touched.");
+            return;
+        } else {
+            debug("New sound touched.");
+        }
+
+        const element = this.soundElements[index]?.element;
+
+        //Tell the browser to play and then immediately pause the song, which
+        //sort of forces it to enable the sound for automating later
+        if (element) {
+            element.load();
+            element.volume = 0;
+            element.play();
+            element.pause();
         }
     }
 
@@ -155,31 +194,29 @@ class SoundServiceCls {
      *   fadeOutBeforePlay: n (seconds to fade out existing sound before starting new sound)
      * @returns 
      */
-    setSound = async (source, options) => {
-        await this.tryResume();
+    setSound = (source, options) => {
+        if (!this.ac) {
+            this.init();    
+        }
+        //await this.tryResume();
 
-        if (this.sound?.source === source) {
+        const index = this.soundElements.findIndex(s => s.data.songSources === source);
+
+        if (this.activeIndex === index) {
             debug("Same sound requested.");
             return;
         } else {
             debug("new sound requested.");
         }
 
+        this.soundElements[index].element.play();
+        this.soundElements[index].element.pause();
+
         const playNewSong = () => {
-            this.sound = {
-                source: source,
-                options: options,
-                key: Date.now(),
-            };
-            if (this.audioChangeHandler) {
-                this.audioChangeHandler(this.sound);
-            }
-            else {
-                console.warn("No audioChangeHandler set.");
-            }
+            this.loadFromAudioElement(index, options);
         }
 
-        if (options?.fadeOutBeforePlay && options.fadeOutBeforePlay > 0) {
+        if (/*!Utils.isIOS() && */this.activeIndex >= 0 && options?.fadeOutBeforePlay && options.fadeOutBeforePlay > 0) {
             this.fadeOut(options.fadeOutBeforePlay);
             window.setTimeout(playNewSong, (1000 * options.fadeOutBeforePlay)+50);
         }
@@ -188,38 +225,22 @@ class SoundServiceCls {
         }
     };
 
-    queueSound = (source, options) => {
-        if (this.sound?.source === source || this.queuedSound?.source === source) {
-            debug(`Same sound queued: ${JSON.stringify(source)}`);
-            return;
-        }
-
-        debug(`Queueing new sound:  ${JSON.stringify(source)}`);
-
-        this.queuedSound ={
-            source: source,
-            options: options,
-            key: Date.now(),
-        };
-        if (this.queuedAudioChangeHandler) {
-            this.queuedAudioChangeHandler(this.queuedSound);
-        }
-    }
-
     _handleReadyToPlay = () => {
         if (!this._readyToPlay) {
             debug("Initial Ready-To-Play")
 
+            const soundElement = this.getAudioElement();
+
             this.eventSubscribers.notifySubscribers({event: this.EVENTS.CAN_PLAY_THROUGH});
-            if (this.sound?.options.loop === true) {
-                this.soundElement.loop = true;
+            if (this.options.loop === true) {
+                soundElement.loop = true;
             }
-            if (this.sound?.options.play) {
-                this.soundElement.currentTime = 0;
-                this.soundElement.muted = false;
-                this.soundElement.volume = 1;
+            if (this.options.play) {
+                soundElement.currentTime = 0;
+                soundElement.muted = false;
+                soundElement.volume = 1;
                 debug("Attempting to play.")
-                this.soundElement.play().then(result => {
+                soundElement.play().then(result => {
                     debug("... playing... "+result);
                 }).catch(e => {
                     debug("... error playing... "+e);
@@ -322,7 +343,8 @@ class SoundServiceCls {
     };
 
     _handleProgressEvent = (e) => {
-        this._readyState = this.soundElement.readyState;
+        const element = this.getAudioElement();
+        this._readyState = element.readyState;
 
         if (this._readyState === READY_STATES.CAN_PLAY_THROUGH) {
             this._handleReadyToPlay();
@@ -339,29 +361,38 @@ class SoundServiceCls {
         this.eventSubscribers.notifySubscribers({event: this.EVENTS.PAUSED});
     };
 
-    loadFromAudioElement = (element) => {
-        if (this.soundElement === element) {
-            debug("Loaded same audio element.");
-            return;
+    _handleEndedEvent = (e) => {
+        debug("Ended");
+        this.eventSubscribers.notifySubscribers({event: this.EVENTS.ENDED});
+    };
+
+    loadFromAudioElement = (index, options) => {
+        const existingElement = this.getAudioElement();
+
+        if (existingElement) {
+            existingElement.removeEventListener("canplaythrough", this._handleCanPlayThroughEvent);
+            existingElement.removeEventListener("timeupdate", this._handleTimeUpdateEvent);
+            existingElement.removeEventListener("seeked", this._handleSeekedEvent);
+            existingElement.removeEventListener("progress", this._handleProgressEvent);
+            existingElement.removeEventListener("play", this._handlePlayEvent);
+            existingElement.removeEventListener("pause", this._handlePauseEvent);
+            existingElement.removeEventListener("ended", this._handleEndedEvent);
+            existingElement.pause();
         }
 
-        debug("Mounted audio element.");
-
-        if (this.soundElement) {
-            this.soundElement.removeEventListener("canplaythrough", this._handleCanPlayThroughEvent);
-            this.soundElement.removeEventListener("timeupdate", this._handleTimeUpdateEvent);
-            this.soundElement.removeEventListener("seeked", this._handleSeekedEvent);
-            this.soundElement.removeEventListener("progress", this._handleProgressEvent);
-            this.soundElement.removeEventListener("play", this._handlePlayEvent);
-            this.soundElement.removeEventListener("pause", this._handlePauseEvent);
-        }
-
-        this.soundElement = element;
-
+        this.activeIndex = index;
+        const sound = this.soundElements[this.activeIndex];
+        const element = sound?.element;
+        
         if (element) {
+            this.options = options;
             element.load();
 
-            const source = this.ac.createMediaElementSource(element);
+            let source = sound.mediaSource;
+            if (!source) {
+                sound.mediaSource = this.ac.createMediaElementSource(element);
+                source = sound.mediaSource;
+            }
             
             source.connect(this.mediaTargetNode);
 
@@ -373,12 +404,13 @@ class SoundServiceCls {
             this._readyToPlay = false;
             this._readyState = element.readyState;
             
-            this.soundElement.addEventListener("canplaythrough", this._handleCanPlayThroughEvent);
-            this.soundElement.addEventListener("timeupdate", this._handleTimeUpdateEvent);
-            this.soundElement.addEventListener("seeked", this._handleSeekedEvent);
-            this.soundElement.addEventListener("progress", this._handleProgressEvent);
-            this.soundElement.addEventListener("play", this._handlePlayEvent);
-            this.soundElement.addEventListener("pause", this._handlePauseEvent);
+            element.addEventListener("canplaythrough", this._handleCanPlayThroughEvent);
+            element.addEventListener("timeupdate", this._handleTimeUpdateEvent);
+            element.addEventListener("seeked", this._handleSeekedEvent);
+            element.addEventListener("progress", this._handleProgressEvent);
+            element.addEventListener("play", this._handlePlayEvent);
+            element.addEventListener("pause", this._handlePauseEvent);
+            element.addEventListener("ended", this._handleEndedEvent);
 
             //Handle the case where the audio element has already mounted and loaded enough to be able to play
             //through before this loadFromAudioElement function is invoked. This will make sure subscribers
@@ -394,24 +426,12 @@ class SoundServiceCls {
         }
     };
 
-    _handleQueueElementStatus = (e) => {
-        debug("Queued Element Status: " + e.target.readyState);
-        if (e.target.readyState === READY_STATES.CAN_PLAY_THROUGH) {
-            debug("Queued Element Ready to Play.");
-        }
-    };
-
-    queuedElementMounted = (qElement) => {
-        qElement.addEventListener("progress", this._handleQueueElementStatus);
-        qElement.load();
-    }
-
     /**
     * Return the current audio element
     * @returns 
     */
     getAudioElement = () => {
-        return this.soundElement;
+        return this.soundElements[this.activeIndex]?.element;
     }
 
     getSampleRate = () => {
@@ -461,9 +481,6 @@ class SoundServiceCls {
 
     setMuted = (muted) => {
         if(muted) {
-            if (this.isSuspended()) {
-                this.tryResume();
-            }
             this.gainNode.gain.setValueAtTime(this.gainNode.gain.value, 0);
             this.gainNode.gain.linearRampToValueAtTime(0, this.ac.currentTime + 0.1);
         }
@@ -476,42 +493,48 @@ class SoundServiceCls {
     };
 
     play = () => {
-        if (this.soundElement) {
-            this.soundElement.play();
+        const element = this.getAudioElement();
+        if (element) {
+            element.play();
         }
     }
 
     pause = () => {
-        if (this.soundElement) {
-            this.soundElement.pause();
+        const element = this.getAudioElement();
+        if (element) {
+            element.pause();
         }
     }
 
     seekTo = (time) => {
-        if (this.soundElement) {
-            this.soundElement.currentTime = time;
+        const element = this.getAudioElement();
+        if (element) {
+            element.currentTime = time;
         }
     }
 
     getCurrentTime = () => {
-        if (this.soundElement) {
-            return this.soundElement.currentTime;
+        const element = this.getAudioElement();
+        if (element) {
+            return element.currentTime;
         } else {
             return -1;
         }
     }
 
     getDuration = () => {
-        if (this.soundElement) {
-            return this.soundElement.duration;
+        const element = this.getAudioElement();
+        if (element) {
+            return element.duration;
         } else {
             return -1;
         }
     }
 
     isPaused = () => {
-        if (this.soundElement) {
-            return this.soundElement.paused;
+        const element = this.getAudioElement();
+        if (element) {
+            return element.paused;
         } else {
             return false;
         }
@@ -572,6 +595,8 @@ class SoundServiceCls {
         this.nextTimeEventInd = 0;
     }
 
+
+    /*
     setAudioChangeHandler = (handler) => {
         this.audioChangeHandler = handler;
     }
@@ -579,9 +604,10 @@ class SoundServiceCls {
     setQueuedAudioChangeHandler = (handler) => {
         this.queuedAudioChangeHandler = handler;
     }
+    */
 
 }
 
-const SoundService = new SoundServiceCls();
+const SoundService2 = new SoundService2Cls();
 
-export default SoundService;
+export default SoundService2;

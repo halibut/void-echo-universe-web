@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import SoundService from "../service/SoundService";
 import State from "../service/State";
+import debug from "./Debug";
 
 
 const Sound = () => {
@@ -33,7 +34,7 @@ const Sound = () => {
     }, [])
 
     const setElmRef = useCallback((elm) => {
-        console.log("Sound element mounted: " + elm);
+        debug("Sound element mounted: " + elm);
 
         soundElementRef.current = elm;
 
@@ -43,7 +44,7 @@ const Sound = () => {
     }, []);
 
     const setQueuedElmRef = useCallback((elm) => {
-        console.log("Queued sound element mounted: " + elm);
+        debug("Queued sound element mounted: " + elm);
 
         queuedSoundElementRef.current = elm;
         if (queuedSoundElementRef.current) {
