@@ -20,7 +20,7 @@ const SoundElement = ({index, songData}) => {
     });
     
     return (
-        <audio id={`audio-element-${index}`} key={index} ref={handleRef} crossOrigin="anonymous">
+        <audio id={`audio-element-${index}`} key={index} ref={handleRef} crossOrigin="anonymous" preload="metadata">
             {sources}
         </audio>
     );

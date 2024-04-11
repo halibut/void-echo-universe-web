@@ -26,7 +26,7 @@ const Title2 = ({fullyLoaded}) => {
     }, []);
 
     useEffect(() => {
-        VisualizerService.setVisualizer(VisualizerService.VISUALIZERS.BLEND_BG);
+        VisualizerService.setVisualizer(VisualizerService.VISUALIZERS.BLEND_BG.name);
 
         if (fullyLoaded) {
             autoTimeout.current = window.setTimeout(() => {

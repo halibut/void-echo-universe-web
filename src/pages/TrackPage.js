@@ -115,7 +115,7 @@ const TrackPage = ({
             loop: State.getStateValue(State.KEYS.REPEAT_MODE, "none") === "track",
         });
 
-        VisualizerService.setVisualizer(VisualizerService.VISUALIZERS.BLEND_BG.name);
+        //VisualizerService.setVisualizer(VisualizerService.VISUALIZERS.BLEND_BG.name);
 
         const soundEventSub = SoundService2.subscribeEvents((e) => {
             switch (e.event) {

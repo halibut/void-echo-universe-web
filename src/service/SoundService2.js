@@ -178,10 +178,18 @@ class SoundService2Cls {
         //Tell the browser to play and then immediately pause the song, which
         //sort of forces it to enable the sound for automating later
         if (element) {
-            element.load();
+            //element.load();
             element.volume = 0;
-            element.play();
-            element.pause();
+            element.muted = true;
+            const playPromise = element.play();
+
+            if (playPromise) {
+                playPromise.then(() => {
+                    element.pause();
+                }).catch((e) => {
+                    console.log("Error touching audio element.", e);
+                });
+            }
         }
     }
 
