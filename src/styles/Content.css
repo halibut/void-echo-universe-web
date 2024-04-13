@@ -145,19 +145,33 @@ h3.title {
     background-color: #0005;
     backdrop-filter: blur(10px);
     padding-top: .5em;
-    padding-bottom: .5em;
+    padding-bottom: 0em;
     border-radius: 1em;
     scrollbar-width: 40px;
+    overflow: hidden;
 }
 
 .song-info h1 {
     margin-left: .5em;
     margin-right: .5em;
     margin-block-start: 0em;
-    margin-block-end: .5em;
+    margin-block-end: .0em;
     font-size: 1.25em;
-    width: 100%;
     text-align: center;
+}
+
+.album-notes-expand-button {
+    background: transparent;
+    color: var(--light);
+    cursor: pointer;
+    border: none;
+    font-size: 1em;
+    padding-top: 0px;
+    padding-bottom: 0px;
+}
+
+.album-notes-expand-button:hover {
+    background: #fff2;
 }
 
 .album-notes {

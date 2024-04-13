@@ -28,7 +28,7 @@ const Credits = ({isLoadingOut, isLoadingIn, fullyLoaded}) => {
       <div className="song-info" style={{top:30, left:0, right:0, alignItems:'center', marginLeft:'auto', marginRight:'auto'}}>
         <h1 className=''>{Constants.title} - Credits</h1>
         <div className='album-notes' >
-          <p>The website and music were created by {Constants.artist}.</p>
+          <p>The music, story, and website were created by {Constants.artist}.</p>
           <p>The album art was created by Lizzie Baxter.</p>
           <p>
             All images are publicly available from NASA's&nbsp; 

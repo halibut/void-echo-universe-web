@@ -7,7 +7,13 @@ import SlideShow from "../components/SlideShow";
 import SideMenu from "../components/SideMenu";
 
 import { IoIosPlay, IoIosSkipForward, IoIosSkipBackward, IoIosPause } from "react-icons/io";
-import { MdOutlineRepeat, MdOutlineRepeatOn, MdOutlineRepeatOneOn } from "react-icons/md";
+import { 
+    MdOutlineRepeat,
+    MdOutlineRepeatOn,
+    MdOutlineRepeatOneOn,
+    MdOutlineExpandMore,
+    MdOutlineExpandLess,
+} from "react-icons/md";
 
 
 import { setLocation } from "../contexts/location-context";
@@ -328,6 +334,17 @@ const TrackPage = ({
         songText = (
             <div className="song-info" style={{}}>
                 <h1>{songData.title}</h1>
+                <button
+                    type="button"
+                    className="album-notes-expand-button"
+                    onClick={() => State.setStateValue(State.KEYS.SHOW_NOTES, !showNotes)}
+                >
+                    {showNotes ? (
+                        <MdOutlineExpandLess />
+                    ) : (
+                        <MdOutlineExpandMore />
+                    )}
+                </button>
                 {albumNotes}
             </div>
         );

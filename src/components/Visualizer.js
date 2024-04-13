@@ -5,6 +5,7 @@ import BarVisualizer from "./visualizers/BarVisualizer";
 import ArcVisualizer from "./visualizers/ArcVisualizer";
 import Subscription from "../service/Subscription";
 import NGonVisualizer from "./visualizers/NGonVisualizer";
+import { Color } from "../utils/Color";
 
 class VisualizerServiceCls {
     VISUALIZERS = {
@@ -52,34 +53,54 @@ class VisualizerServiceCls {
 
 export const VisualizerService = new VisualizerServiceCls();
 
+const createDefaultOptions = () => {
+    return {
+        primary: Color(255,255,255,0.5),
+        secondary: Color(0,0,0,0.5),
+    };
+};
 
-const createVizComponent = (name, options) => {
+const createVizComponent = (visType, name, options) => {
+    let opts = options;
+    if (!opts) {
+        opts = createDefaultOptions();
+    }
+
+    let visName = name;
+    if (visType !== "default") {
+        if (visType.startsWith("ngon")) {
+            visName = "ngon";
+            opts.numSides = +(visType.substring("ngon-".length));
+        } else {
+            visName = visType;
+        }
+    }
+
     let viz = Object.keys(VisualizerService.VISUALIZERS)
         .map(k => VisualizerService.VISUALIZERS[k])
-        .find(v => v.name === name);
+        .find(v => v.name === visName);
     
-
     if (!viz) {
-        console.warn("No vizualizer named: "+name);
+        console.warn("No vizualizer named: "+visName+" for type: "+visType);
         viz = VisualizerService.VISUALIZERS.BLEND_BG;
     }
 
     const Comp = viz.component;
 
     return (
-        <Comp key={name} options={options} />
+        <Comp key={name} options={opts} />
     );
 } 
 
 
 const Visualizer = () => {
-    const [enabled, setEnabled] = useState(State.getStateValue(State.KEYS.SHOW_VISUALIZER, true));
     const [vis, setVis] = useState(VisualizerService.getVisualizer());
+    const [visType, setVisType] = useState(State.getStateValue(State.KEYS.VISUALIZER_TYPE, "default"));
 
     useEffect(() => {
         const stateSub = State.subscribeToStateChanges(({state, value}) => {
-            if (state === State.KEYS.SHOW_VISUALIZER) {
-                setEnabled(value);
+            if (state === State.KEYS.VISUALIZER_TYPE) {
+                setVisType(value);
             }
         });
 
@@ -92,12 +113,12 @@ const Visualizer = () => {
         }
     }, []);
     
-    if (!enabled || !vis) {
+    if (visType === "none" || !vis) {
         return null;
     } else {
         return (
             <div key="vis-container" style={{position: 'absolute', top:0, left:0, width:"100%", height:"100%"}}>
-                {createVizComponent(vis.name, vis.options)}
+                {createVizComponent(visType, vis.name, vis.options)}
             </div>
         )
     }

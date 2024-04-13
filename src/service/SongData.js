@@ -173,7 +173,7 @@ const SongData = {
         },
     },
     track06: {
-        title: "Sapience (Void Echo)",
+        title: "Sapience",
         trackNumber: 6,
         songLength: "5:12",
         songSources: [

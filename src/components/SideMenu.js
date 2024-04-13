@@ -190,17 +190,29 @@ const SideMenu = ({
                     </div>
                 )}
                 <div>
-                    <ToggleMenuItem optionKey={State.KEYS.SHOW_NOTES} optionName={"Show Story"} defaultValue={true} />
+                    <MultiOptionMenuItem 
+                        optionKey={State.KEYS.VISUALIZER_TYPE}
+                        optionName={"Visualizer"}
+                        defaultValue={"default"}
+                        options={[
+                            {value:'default', label:'Default'},
+                            {value:'blend-bg', label:'Brightness'},
+                            {value:'bars', label:'Bars'},
+                            {value:'arcs', label:'Arcs'},
+                            {value:'ngon-2', label:'2-Gon'},
+                            {value:'ngon-3', label:'3-Gon'},
+                            {value:'ngon-4', label:'4-Gon'},
+                            {value:'none', label:'None'},
+                        ]}
+                    />
                 </div>
-                <div>
-                    <ToggleMenuItem optionKey={State.KEYS.SHOW_VISUALIZER} optionName={"Visualizations"} defaultValue={true} />
-                </div>
+                
                 <div>
                     <ToggleMenuItem optionKey={State.KEYS.SHOW_IMAGE_ATTRIBUTION} optionName={"Image Attribution"} defaultValue={false} />
                 </div>
                 <div>
                     <MultiOptionMenuItem 
-                        optionKey={"img-quality"}
+                        optionKey={State.KEYS.IMG_QUALITY}
                         optionName={"Image Quality"}
                         defaultValue={"large"}
                         options={[
