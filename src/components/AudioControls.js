@@ -43,19 +43,19 @@ const VolumeControl = ({uiExpanded}) => {
     setMuted(newVal);
   };
 
-  let elm = <IoVolumeMute />;
-  if (muted) {
-    elm = <IoVolumeMute />;
-  } else if (vol >= 0.6) {
-    elm = <IoVolumeHigh />;
-  } else if (vol >= 0.3) {
-    elm = <IoVolumeMedium />;
-  } else if (vol > 0) {
-    elm = <IoVolumeLow />;
-  }
-
+  let elm = null;
   let volKnob = null;
   if ((uiExpanded || expanded) && !muted) {
+    elm = <IoVolumeMute />;
+    if (muted) {
+      elm = <IoVolumeMute />;
+    } else if (vol >= 0.6) {
+      elm = <IoVolumeHigh />;
+    } else if (vol >= 0.3) {
+      elm = <IoVolumeMedium />;
+    } else if (vol > 0) {
+      elm = <IoVolumeLow />;
+    }
     volKnob = (
       <div className="volume-knob">
         <input

@@ -245,12 +245,14 @@ const SideMenu = ({
                                 <span>bandcamp</span>
                             </Link>
                         </div>
+                        {/*
                         <div >
                             <Link className="menu-link" foreign="true" path={songData.links.spotify} >
                                 <FaSpotify />
                                 <span>Spotify</span>
                             </Link>
                         </div>
+                        */}
                     </>
                 ) : (
                     <>
@@ -273,12 +275,12 @@ const SideMenu = ({
                                 <span>bandcamp</span>
                             </Link>
                         </div>
-                        <div >
+                        {/* <div >
                             <Link className="menu-link" foreign="true" path={Constants.links.spotifyAlbumURL} >
                                 <FaSpotify />
                                 <span>Spotify</span>
                             </Link>
-                        </div>
+                        </div> */}
                     </>
                 )}
                 <div className="divider" />

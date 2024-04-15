@@ -53,6 +53,8 @@ const TrackPage = ({
     const [fadingControls, setFadingControls] = useState(false);
     const [repeatMode, setRepeatMode] = useState(State.getStateValue(State.KEYS.REPEAT_MODE));
 
+    const [startSlideshow, setStartSlideshow] = useState(false);
+
     const [imageMetadata, setImageMetadata] = useState(null);
 
     const controlsTimeoutRef = useRef(null);
@@ -107,7 +109,10 @@ const TrackPage = ({
             }
 
             //Slideshow image events are handled within the SlideShow component
-            //so we don't need to do anything with the nasaImages here
+            //so we don't need to do anything with the nasaImages here. However
+            //We don't want the slideshow to start until the song does, so lets add one event
+            //here to kick it off
+            SoundService2.registerTimeEvent(0, () => setStartSlideshow(true), true, true);
         }
     }, [songData?.visualizer]);
 
@@ -361,7 +366,7 @@ const TrackPage = ({
 
     return (
         <div className='center' style={{flex:1, width:'100%', paddingBottom:50, position:'relative'}}>
-            { !isLoadingOut && (
+            { !isLoadingOut && !paused && startSlideshow && (
                 <SlideShow key={songData.title} songData={songData} onLoadImageMetadata={showImageAttribution ? setImageMetadata : undefined} />
             )}
 

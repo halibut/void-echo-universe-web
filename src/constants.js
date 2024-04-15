@@ -12,7 +12,7 @@ const Constants = {
   BASE_URL: process.env.REACT_APP_BASE_URL,
 
   links: {
-    bandcampAlbumURL: "",
+    bandcampAlbumURL: "https://voidecho.bandcamp.com/album/everything",
     spotifyAlbumURL: "",
     email: {url:"mailto:voidechomusic@gmail.com", text:"voidechomusic@gmail.com"},
     twitter: {url:"https://twitter.com/V0ID_ECH0", text:"@V0ID_ECH0"},

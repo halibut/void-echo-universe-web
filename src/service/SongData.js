@@ -77,8 +77,8 @@ const SongData = {
             }},
         ],
         links: {
-            bandcamp: "https://google.com",
-            spotify: "https://google.com",
+            bandcamp: "https://voidecho.bandcamp.com/track/the-big-bang",
+            spotify: "",
         },
     },
     track02: {
@@ -101,8 +101,8 @@ const SongData = {
             {time: 272.92, viz: VIZ.BARS, options:{primary: Color(0, 0, 32, 0.95), secondary: Color(255, 200, 200, 0.95), heightScale: 0.8,}},
         ],
         links: {
-            bandcamp: "https://google.com",
-            spotify: "https://google.com",
+            bandcamp: "https://voidecho.bandcamp.com/track/cosmic-microwave-background",
+            spotify: "",
         },
     },
     track03: {
@@ -121,8 +121,8 @@ const SongData = {
             {time: 0, viz: VIZ.BLEND_BG, options:{primary: Color(255,255,255,0.5), secondary: Color(0,0,0,0.5)}},
         ],
         links: {
-            bandcamp: "https://google.com",
-            spotify: "https://google.com",
+            bandcamp: "https://voidecho.bandcamp.com/track/nebulae",
+            spotify: "",
         },
     },
     track04: {
@@ -148,8 +148,8 @@ const SongData = {
             {time: 181.4 , viz: VIZ.ARCS , options:{primary: Color(220, 220, 255, 0.95), secondary: Color(0, 0, 64, 0.95), heightScale: 0.8,}}, 
         ],
         links: { 
-            bandcamp: "https://google.com",
-            spotify: "https://google.com",
+            bandcamp: "https://voidecho.bandcamp.com/track/abiogenesis",
+            spotify: "",
         },
     },
     track05: {
@@ -168,8 +168,8 @@ const SongData = {
             {time: 0, viz: VIZ.BARS, options:{primary: Color(255, 255, 255, 1.25), secondary: Color(0, 0, 0, 0.95), heightScale: 1,}},
         ],
         links: {
-            bandcamp: "https://google.com",
-            spotify: "https://google.com",
+            bandcamp: "https://voidecho.bandcamp.com/track/canopies",
+            spotify: "",
         },
     },
     track06: {
@@ -225,8 +225,8 @@ const SongData = {
             {time: 304, viz: VIZ.BLEND_BG, options:{primary:Color(255,255,255,1), secondary:Color(255,255,255,1), blendMode:'darken'}}
         ],
         links: {
-            bandcamp: "https://google.com",
-            spotify: "https://google.com",
+            bandcamp: "https://voidecho.bandcamp.com/track/sapience",
+            spotify: "",
         },
     },
     track07: {
@@ -245,8 +245,8 @@ const SongData = {
             {time: 0, viz: VIZ.BLEND_BG, options:{primary: Color(255,255,255,0.5), secondary: Color(0,0,0,0.5)}},
         ],
         links: {
-            bandcamp: "https://google.com",
-            spotify: "https://google.com",
+            bandcamp: "https://voidecho.bandcamp.com/track/the-relentless-march-of-time",
+            spotify: "",
         },
     },
     track08: {
@@ -279,8 +279,8 @@ const SongData = {
             }},
         ],
         links: {
-            bandcamp: "https://google.com",
-            spotify: "https://google.com",
+            bandcamp: "https://voidecho.bandcamp.com/track/red-shift",
+            spotify: "",
         },
     },
     track09: {
@@ -300,8 +300,8 @@ const SongData = {
             {time: 0, viz: VIZ.BLEND_BG, options:{primary: Color(255,255,255,0.5), secondary: Color(0,0,0,0.5)}},
         ],
         links: {
-            bandcamp: "https://google.com",
-            spotify: "https://google.com",
+            bandcamp: "https://voidecho.bandcamp.com/track/collapsing-star",
+            spotify: "",
         },
     },
     track10: {
@@ -329,8 +329,8 @@ const SongData = {
             }},
         ],
         links: {
-            bandcamp: "https://google.com",
-            spotify: "https://google.com",
+            bandcamp: "https://voidecho.bandcamp.com/track/one-last-alarm-before-the-end",
+            spotify: "",
         },
     },
     track11: {
@@ -370,8 +370,8 @@ const SongData = {
             }},
         ],
         links: {
-            bandcamp: "https://google.com",
-            spotify: "https://google.com",
+            bandcamp: "https://voidecho.bandcamp.com/track/spacetime-will-be-torn-apart",
+            spotify: "",
         },
     },
     track12: {
@@ -396,8 +396,8 @@ const SongData = {
             }},
         ],
         links: {
-            bandcamp: "https://google.com",
-            spotify: "https://google.com",
+            bandcamp: "https://voidecho.bandcamp.com/track/what-happens-now",
+            spotify: "",
         },
     },
 };
