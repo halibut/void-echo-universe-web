@@ -6,7 +6,6 @@ import Link from "../components/Link";
 import Utils from "../utils/Utils";
 import { setDefaultBackground } from "../service/BackgroundService";
 import SideMenu from "../components/SideMenu";
-import { VisualizerService } from "../components/Visualizer";
 import Constants from "../constants";
 
 const TrackItem = ({songData, selected}) => {
@@ -43,8 +42,6 @@ const MainMenu = ({isLoadingOut, isLoadingIn, fullyLoaded}) => {
     });
 
     SoundService2.setSound(SongData.track00.songSources, {play:true, loop:true, fadeOutBeforePlay: 2});
-
-    VisualizerService.setVisualizer(VisualizerService.VISUALIZERS.BLEND_BG.name);
 
     return () => {
       trackSub.unsubscribe();

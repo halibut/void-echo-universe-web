@@ -4,7 +4,6 @@ import SoundService2 from "../service/SoundService2";
 import SongData from "../service/SongData";
 import { setLocation } from "../contexts/location-context";
 import { setDefaultBackground } from "../service/BackgroundService";
-import { VisualizerService } from "../components/Visualizer";
 
 const Title = ({fullyLoaded}) => {
     const nextRequested = useRef(false);
@@ -37,8 +36,6 @@ const Title = ({fullyLoaded}) => {
         SoundService2.setSound(SongData.track00.songSources, {play:true, loop:true, fadeOutBeforePlay: 2});
   
         setDefaultBackground(3000);
-
-        VisualizerService.setVisualizer(VisualizerService.VISUALIZERS.BLEND_BG.name);
         
         return () => {
             if (autoTimeout.current) {

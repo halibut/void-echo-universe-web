@@ -1,10 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import Constants from "../constants";
 import SoundService2 from "../service/SoundService2";
 import SongData from "../service/SongData";
 import { setLocation } from "../contexts/location-context";
 import { setDefaultBackground } from "../service/BackgroundService";
-import Visualizer, { VisualizerService } from "../components/Visualizer";
 
 const Title2 = ({fullyLoaded}) => {
     const [transitioning, setTransitioning] = useState(false);
@@ -26,8 +24,6 @@ const Title2 = ({fullyLoaded}) => {
     }, []);
 
     useEffect(() => {
-        VisualizerService.setVisualizer(VisualizerService.VISUALIZERS.BLEND_BG.name);
-
         if (fullyLoaded) {
             autoTimeout.current = window.setTimeout(() => {
                 autoTimeout.current = null;

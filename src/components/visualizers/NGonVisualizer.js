@@ -65,40 +65,32 @@ function createNGonPaths(innerRad, outerRad, numSides, segments, dutyCycle) {
     return paths;
 }
 
-/** Uses HTML canvas animate the screen to the music */
-const NGonVisualizer = ({options}) => {
+class NGonVisualizerCls {
+    constructor() {
+        this.barArray = new Array(50);
+        this.paths = null;
+        this.clearPath = null;
+        this.currentNumSides = 3;
+        this.primaryMixMode = "source-over";
+        this.secondaryMixMode = "source-over";
 
-    const dataRef = useRef({
-        barArray: new Array(50),
-        paths: null,
-        clearPath: null,
-        currentNumSides: 3,
-        w: 10,
-        h: 10,
-        primaryMixMode: "source-over",
-        secondaryMixMode: "source-over",
-    });
-    const optsRef = useRef({
-        primary: Color(255, 255, 255, .5),
-        secondary: Color(0, 0, 0, .8),
-        numSides: 3,
-        inverse: false,
-    });
+        this.options = {
+            primary: Color(255, 255, 255, .5),
+            secondary: Color(0, 0, 0, .8),
+            numSides: 3,
+            inverse: false,
+        };
+    }
 
-    useEffect(() => {
-        //Update "global" values from options
-        if (options) {
-            optsRef.current = options;
-        }
-    }, [options])
+    setOptions = (opts) => {
+        this.options = opts;
+    }
     
-    const doFrame = (canvas) => {
-        const {barArray, w, h, primaryMixMode, secondaryMixMode} = dataRef.current;
-        let {paths, currentNumSides, clearPath} = dataRef.current;
-        const {primary, secondary, gradientTimes, inverse} = optsRef.current;
-        let numSides = optsRef.current?.numSides ? optsRef.current.numSides : 3;
-        const ctxt = canvas.getContext("2d");
-
+    doFrame = (canvas, ctxt, w, h) => {
+        let {paths, currentNumSides, clearPath} = this;
+        const {primary, secondary, gradientTimes, inverse} = this.options;
+        let numSides = this.options?.numSides ? this.options.numSides : 3;
+        
         const inv = inverse === true;
 
         const hw = Math.floor(w / 2);
@@ -108,18 +100,11 @@ const NGonVisualizer = ({options}) => {
         if (!paths || currentNumSides !== numSides || canvas.width !== w || canvas.height !== h) {
             const outerRad = Math.max(hw, hh) * (numSides <= 2 ? 2 : 1.5 );
             //const outerRad = 200;
-            paths = createNGonPaths(0, outerRad, numSides, barArray.length);
+            paths = createNGonPaths(0, outerRad, numSides, this.barArray.length);
             clearPath = createNGonPaths(0, outerRad * 3, numSides, 1)[0];
-            dataRef.current.paths = paths;
-            dataRef.current.clearPath = clearPath;
-            dataRef.current.currentNumSides = numSides;
-        }
-
-        if (canvas.width !== w) {
-            canvas.width = w;
-        }
-        if (canvas.height !== h) {
-            canvas.height = h;
+            this.paths = paths;
+            this.clearPath = clearPath;
+            this.currentNumSides = numSides;
         }
         
         //Set the background to all black
@@ -134,14 +119,14 @@ const NGonVisualizer = ({options}) => {
         const pc = primary.getGradientColor(tx);
         const sc = secondary.getGradientColor(tx);
 
-        ctxt.globalCompositeOperation = secondaryMixMode;
+        ctxt.globalCompositeOperation = this.secondaryMixMode;
         ctxt.fillStyle = sc.getRGBAColorString();
         ctxt.fillRect(0, 0, w, h);
 
         const fftData = SoundService2.getFFTData();
         
         if (fftData) {
-            Utils.fftDataToSmallerArrayLogarithmic(fftData, barArray, {freqStart: 0, freqEnd: 1});
+            Utils.fftDataToSmallerArrayLogarithmic(fftData, this.barArray, {freqStart: 0, freqEnd: 1});
 
             if (numSides === 1) {
                 ctxt.translate(hw, h);
@@ -160,7 +145,7 @@ const NGonVisualizer = ({options}) => {
             //ctxt.fillStyle = "#ffff";
             //ctxt.fill(clearPath);
 
-            const segments = barArray.length;
+            const segments = this.barArray.length;
 
             //Now loop through each bar segment and calculate the intensity of the primary color
             //and draw the corresponding path
@@ -168,26 +153,18 @@ const NGonVisualizer = ({options}) => {
                 const p = paths[i];
 
                 const barInd = inv ? segments - i - 1 : i;
-                const barIntensity = (Math.max(0, barArray[barInd] / 128) );
+                const barIntensity = (Math.max(0, this.barArray[barInd] / 128) );
                 const c = pc.scalarMultiplyNoAlpha(barIntensity);
                 //const c = pc.scalarMultiplyAlphaOnly(barIntensity);
 
                 ctxt.fillStyle = c.getRGBAColorString();
-                ctxt.globalCompositeOperation = primaryMixMode;
+                ctxt.globalCompositeOperation = this.primaryMixMode;
                 ctxt.fill(p);
             }
         }
     };
 
-    const resizeCanvas = useCallback((w,h) => {
-        dataRef.current.w = Math.floor(w);
-        dataRef.current.h = Math.floor(h);
-    }, []);
-
-    return (
-        <Canvas key={"c"} drawFrame={doFrame} onResize={resizeCanvas} style={{mixBlendMode: options?.blendMode ? options.blendMode : "overlay"}}/>
-    )
-
 }
 
+const NGonVisualizer = new NGonVisualizerCls();
 export default NGonVisualizer;

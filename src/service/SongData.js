@@ -1,7 +1,7 @@
 import imageCats from "../images/nasa-images-by-category";
 import AlbumNotes from "./AlbumNotes";
 import Constants from "../constants";
-import { VisualizerService } from "../components/Visualizer";
+import { VISUALIZERS as VIZ } from "../components/Visualizer";
 import { Color, Gradient } from "../utils/Color";
 
 function getSongURL(fileName) {
@@ -11,8 +11,6 @@ function getSongURL(fileName) {
         return `${process.env.PUBLIC_URL}/sounds/${fileName}`;
     }
 }
-
-const VIZ = VisualizerService.VISUALIZERS;
 
 const SongData = {
     track00: {

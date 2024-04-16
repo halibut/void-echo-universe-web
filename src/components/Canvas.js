@@ -1,16 +1,19 @@
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useCallback } from "react";
 
 const Canvas = ({className, style, drawFrame, onResize}) => {
-  const canvasRef = useRef(null);
+  const canvasRef = useRef({
+    canvas: null,
+    context: null,
+  });
   const resizeTimeoutRef = useRef(null);
 
   const animRef = useRef(null);
 
   useEffect(() => {
     const draw = () => {
-      const canvas = canvasRef.current;
-      if (canvas) {
-        drawFrame(canvas);
+      const {canvas, context} = canvasRef.current;
+      if (canvas && context) {
+        drawFrame(canvas, context);
       }
       animRef.current = window.requestAnimationFrame(draw);
     };
@@ -25,9 +28,23 @@ const Canvas = ({className, style, drawFrame, onResize}) => {
     };
   }, [drawFrame]);
 
+  const setCanvasRef = useCallback((canvasElm) => {
+    if (canvasElm) {
+      canvasRef.current = {
+        canvas: canvasElm,
+        context: canvasElm.getContext("2d"),
+      };
+    } else {
+      canvasRef.current = {
+        canvas: null,
+        context: null,
+      };
+    }
+  }, []);
+
   useEffect(() => {
     const callback = (entries) => {
-      if(!canvasRef.current) {
+      if(!canvasRef.current.canvas) {
         return;
       }
 
@@ -57,7 +74,7 @@ const Canvas = ({className, style, drawFrame, onResize}) => {
 
     const resizeObserver = new ResizeObserver(callback);
 
-    resizeObserver.observe(canvasRef.current);
+    resizeObserver.observe(canvasRef.current.canvas);
 
     return () => {
       resizeObserver.disconnect();
@@ -79,7 +96,7 @@ const Canvas = ({className, style, drawFrame, onResize}) => {
   return (
     <div style={{width: '100%', height: '100%', flex:1}}>
       <canvas
-        ref={canvasRef}
+        ref={setCanvasRef}
         resize='true'
         style={canvasStyle}
         className={className ? className : ""}

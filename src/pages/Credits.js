@@ -5,7 +5,6 @@ import Link from "../components/Link";
 import { setDefaultBackground } from "../service/BackgroundService";
 import SideMenu from "../components/SideMenu";
 import Constants from "../constants";
-import { VisualizerService } from "../components/Visualizer";
 import State from "../service/State";
 
 
@@ -15,8 +14,6 @@ const Credits = ({isLoadingOut, isLoadingIn, fullyLoaded}) => {
     setDefaultBackground(3000);
 
     SoundService2.setSound(SongData.track00.songSources, {play:true, loop:true, fadeOutBeforePlay: 2});
-
-    VisualizerService.setVisualizer(VisualizerService.VISUALIZERS.BLEND_BG.name);
 
     return () => {
 

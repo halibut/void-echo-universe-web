@@ -518,6 +518,14 @@ class SoundService2Cls {
         return this.soundElements[this.activeIndex]?.element;
     }
 
+    /**
+    * Return the sound data associated with the current sound
+    * @returns 
+    */
+    getSoundData = () => {
+        return this.soundElements[this.activeIndex]?.data;
+    }
+
     getSampleRate = () => {
         if (this.ac) {
             return this.ac.sampleRate;

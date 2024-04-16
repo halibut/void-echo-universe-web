@@ -2,7 +2,6 @@ import { useCallback, useEffect, useRef, useState} from "react";
 import SoundService2 from "../service/SoundService2";
 import State from "../service/State";
 import Utils from "../utils/Utils";
-import SlideShow from "../components/SlideShow";
 
 import SideMenu from "../components/SideMenu";
 
@@ -15,9 +14,8 @@ import {
     MdOutlineExpandLess,
 } from "react-icons/md";
 
-
 import { setLocation } from "../contexts/location-context";
-import { VisualizerService } from "../components/Visualizer";
+import SlideShow from "../service/Slideshow";
 
 /**
  * Returns a component that is basically a wrapper around TrackPage, but with the specified songDat.
@@ -53,15 +51,12 @@ const TrackPage = ({
     const [fadingControls, setFadingControls] = useState(false);
     const [repeatMode, setRepeatMode] = useState(State.getStateValue(State.KEYS.REPEAT_MODE));
 
-    const [startSlideshow, setStartSlideshow] = useState(false);
-
     const [imageMetadata, setImageMetadata] = useState(null);
 
     const controlsTimeoutRef = useRef(null);
     const fadeoutControlsRef = useRef(null);
     const nextTrackTimeoutRef = useRef(null);
-    const alreadyRegisteredTimeEventsRef = useRef(false);
-
+    
     const goToPrevious = useCallback((e) => {
         if (e) {
             e.stopPropagation();
@@ -90,32 +85,6 @@ const TrackPage = ({
         setLocation(nextURL);
     }, [songData]);
 
-    /**
-     * This function is called when the song is ready to be played and sets up time-based events
-     * configured for each song.
-     */
-    const registerTimeEvents = useCallback(() => {
-        if (!alreadyRegisteredTimeEventsRef.current) {
-            alreadyRegisteredTimeEventsRef.current = true;
-
-            //Register visualizer events if there are any
-            if (songData.visualizer) {
-                songData.visualizer.forEach(v => {
-                    const setVisualizer = () => {
-                        VisualizerService.setVisualizer(v.viz.name, v.options);
-                    }
-                    SoundService2.registerTimeEvent(v.time, setVisualizer, true, true);
-                });
-            }
-
-            //Slideshow image events are handled within the SlideShow component
-            //so we don't need to do anything with the nasaImages here. However
-            //We don't want the slideshow to start until the song does, so lets add one event
-            //here to kick it off
-            SoundService2.registerTimeEvent(0, () => setStartSlideshow(true), true, true);
-        }
-    }, [songData?.visualizer]);
-
     useEffect(() => {
         //Play the song for this track
         State.setStateValue(State.KEYS.CURRENT_TRACK, songData.trackNumber);
@@ -125,8 +94,6 @@ const TrackPage = ({
             fadeOutBeforePlay: 2,
             loop: State.getStateValue(State.KEYS.REPEAT_MODE, "none") === "track",
         });
-
-        //VisualizerService.setVisualizer(VisualizerService.VISUALIZERS.BLEND_BG.name);
 
         const soundEventSub = SoundService2.subscribeEvents((e) => {
             switch (e.event) {
@@ -197,9 +164,6 @@ const TrackPage = ({
                     }
                     setShowControls(true);
                     break;
-                case SoundService2.EVENTS.CAN_PLAY_THROUGH:
-                    registerTimeEvents();
-                    break;
                 default:
             }
         });
@@ -236,6 +200,14 @@ const TrackPage = ({
 
         return () => {
             stateSub.unsubscribe();
+        }
+    }, []);
+
+    useEffect(() => {
+        const ssSub = SlideShow.subscribeToImageMetadata(setImageMetadata);
+
+        return () => {
+            ssSub.unsubscribe();
         }
     }, []);
 
@@ -366,10 +338,6 @@ const TrackPage = ({
 
     return (
         <div className='center' style={{flex:1, width:'100%', paddingBottom:50, position:'relative'}}>
-            { !isLoadingOut && !paused && startSlideshow && (
-                <SlideShow key={songData.title} songData={songData} onLoadImageMetadata={showImageAttribution ? setImageMetadata : undefined} />
-            )}
-
             <div className="col" style={{position:"absolute", left:0, top:0, width:"100%", height:"100%", cursor:"pointer"}} onClick={toggleControls} ></div>
 
             {songText}

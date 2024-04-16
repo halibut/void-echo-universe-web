@@ -1,57 +1,31 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import State from "../service/State";
 import BlendBgVisualizer from "./visualizers/BlendBgVisualizer";
 import BarVisualizer from "./visualizers/BarVisualizer";
 import ArcVisualizer from "./visualizers/ArcVisualizer";
-import Subscription from "../service/Subscription";
 import NGonVisualizer from "./visualizers/NGonVisualizer";
 import { Color } from "../utils/Color";
+import SoundService2 from "../service/SoundService2";
+import Canvas from "./Canvas";
 
-class VisualizerServiceCls {
-    VISUALIZERS = {
-        BLEND_BG: {
-            name: "blend-bg",
-            component: BlendBgVisualizer,
-        },
-        BARS: {
-            name: "bars",
-            component: BarVisualizer,
-        },
-        ARCS: {
-            name: "arcs",
-            component: ArcVisualizer,
-        },
-        NGON: {
-            name: "ngon",
-            component: NGonVisualizer,
-        },
-    };
-
-    constructor() {
-        this.subscribers = new Subscription("viz");
-        this.currentViz = null;
-    }
-
-    setVisualizer = (name, options) => {
-        if (name) {
-            this.currentViz = {name, options};
-        } else {
-            this.currentViz = null;
-        }
-
-        this.subscribers.notifySubscribers(this.currentViz);
-    }
-
-    getVisualizer = () => {
-        return this.currentViz;
-    }
-
-    subscribeToVisualizerChanges = (handler) => {
-        return this.subscribers.subscribe(handler);
-    }
-}
-
-export const VisualizerService = new VisualizerServiceCls();
+export const VISUALIZERS = {
+    BLEND_BG: {
+        name: "blend-bg",
+        viz: BlendBgVisualizer,
+    },
+    BARS: {
+        name: "bars",
+        viz: BarVisualizer,
+    },
+    ARCS: {
+        name: "arcs",
+        viz: ArcVisualizer,
+    },
+    NGON: {
+        name: "ngon",
+        viz: NGonVisualizer,
+    },
+};
 
 const createDefaultOptions = () => {
     return {
@@ -60,65 +34,153 @@ const createDefaultOptions = () => {
     };
 };
 
-const createVizComponent = (visType, name, options) => {
+const getVizInstance = (visType, options) => {
     let opts = options;
     if (!opts) {
         opts = createDefaultOptions();
     }
 
-    let visName = name;
+    let visName = visType;
     if (visType !== "default") {
         if (visType.startsWith("ngon")) {
             visName = "ngon";
-            opts.numSides = +(visType.substring("ngon-".length));
-        } else {
-            visName = visType;
-        }
+            if (visType.length > 5) {
+                opts.numSides = +(visType.substring("ngon-".length));
+            } else {
+                opts.numSides = opts.numSides ? opts.numSides : 2;
+            }
+        } 
     }
 
-    let viz = Object.keys(VisualizerService.VISUALIZERS)
-        .map(k => VisualizerService.VISUALIZERS[k])
+    let viz = Object.keys(VISUALIZERS)
+        .map(k => VISUALIZERS[k])
         .find(v => v.name === visName);
     
     if (!viz) {
         console.warn("No vizualizer named: "+visName+" for type: "+visType);
-        viz = VisualizerService.VISUALIZERS.BLEND_BG;
+        viz = VISUALIZERS.BLEND_BG;
     }
 
-    const Comp = viz.component;
-
-    return (
-        <Comp key={name} options={opts} />
-    );
+    viz.viz.setOptions(options);
+    return viz.viz;
 } 
 
 
 const Visualizer = () => {
-    const [vis, setVis] = useState(VisualizerService.getVisualizer());
+    const [blendMode, setBlendMode] = useState('overlay');
     const [visType, setVisType] = useState(State.getStateValue(State.KEYS.VISUALIZER_TYPE, "default"));
+
+    const soundDataRef = useRef(null);
+
+    const dimensionsRef = useRef({w: 10, h:10});
+
+    const visInstanceRef = useRef(null);
+    const optsRef = useRef(createDefaultOptions());
+    const visTypeRef = useRef(visType);
 
     useEffect(() => {
         const stateSub = State.subscribeToStateChanges(({state, value}) => {
             if (state === State.KEYS.VISUALIZER_TYPE) {
                 setVisType(value);
+                visTypeRef.current = value;
+
+                if (value === "none") {
+                    visInstanceRef.current = null;
+                } else {
+                    visInstanceRef.current = getVizInstance(value, optsRef.current);
+                }
+            }
+        });
+    
+        return () => {
+            stateSub.unsubscribe();
+        }
+    }, []);
+
+    useEffect(() => {
+        //Whenever the sound starts playing, check to see if it's new, and then
+        //set up time-based visualizer events.
+        const soundEventSub = SoundService2.subscribeEvents((evt) => {
+            switch(evt.event) {
+                case SoundService2.EVENTS.PLAYING: 
+                    const soundData = SoundService2.getSoundData();
+                    if (soundDataRef.current !== soundData) {
+                        soundDataRef.current = soundData;
+
+                        if (soundData) {
+                            if (soundData.visualizer) {
+                                //If the sound has visualizer data associated, then register it
+                                soundData.visualizer.forEach(v => {
+                                    SoundService2.registerTimeEvent(v.time, () => setVisualizer(v), true, true);
+                                });
+                            } else {
+                                //Otherwise, set up a default visualizer
+                                SoundService2.registerTimeEvent(0, () => setVisualizer({
+                                    viz: VISUALIZERS.BLEND_BG,
+                                    options: createDefaultOptions(),
+                                }), true, true);
+                            }
+                        }
+                    }
+                    break;
+                default:
+                    break;
             }
         });
 
-        const visSub = VisualizerService.subscribeToVisualizerChanges(setVis);
-
         return () => {
-            stateSub.unsubscribe();
-
-            visSub.unsubscribe();
+            soundEventSub.unsubscribe();
         }
     }, []);
+
+    const setVisualizer = (visData) => {
+        if (visData.options?.blendMode) {
+            setBlendMode(visData.options.blendMode);
+        } else {
+            setBlendMode("overlay");
+        }
+
+        optsRef.current = visData.options;
+        
+        if (visTypeRef.current === "none") {
+            //do nothing
+        } else {
+            if (visTypeRef.current === "default") {
+                visInstanceRef.current = getVizInstance(visData.viz.name, visData.options);
+            }
+            else {
+                visInstanceRef.current = getVizInstance(visTypeRef.current, visData.options);
+            }
+        }
+    }
+
+    const doFrame = (canvas, context) => {
+        const {w, h} = dimensionsRef.current;
+        if (canvas.width !== w) {
+            canvas.width = w;
+        }
+        if (canvas.height !== h) {
+            canvas.height = h;
+        }
+
+        context.resetTransform();
+
+        if (visInstanceRef.current) {
+            visInstanceRef.current.doFrame(canvas, context, w, h);
+        } 
+    }
+
+    const resizeCanvas = useCallback((w,h) => {
+        dimensionsRef.current.w = Math.floor(w);
+        dimensionsRef.current.h = Math.floor(h);
+    }, []);
     
-    if (visType === "none" || !vis) {
+    if (visType === "none") {
         return null;
     } else {
         return (
             <div key="vis-container" style={{position: 'absolute', top:0, left:0, width:"100%", height:"100%"}}>
-                {createVizComponent(visType, vis.name, vis.options)}
+                <Canvas key={"c"} drawFrame={doFrame} onResize={resizeCanvas} style={{mixBlendMode: blendMode}}/>
             </div>
         )
     }

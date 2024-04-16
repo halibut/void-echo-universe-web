@@ -1,7 +1,5 @@
-import { useCallback, useEffect, useRef } from "react"
 import SoundService2 from "../../service/SoundService2";
 import Utils from "../../utils/Utils";
-import Canvas from "../Canvas";
 import { Color } from "../../utils/Color";
 
 
@@ -12,40 +10,24 @@ const HIGH_MULTIPLIER = 1 / 255;
 const LOW_FREQ = 300;
 const HIGH_FREQ = 2000;
 
-/** Uses CSS variables to animate aspects of a div to the music */
-const BlendBgVisualizer = ({options}) => {
-    const dataRef = useRef({
-        w: 10,
-        h: 10,
-        pCalc: new Array(4),
-        sCalc: new Array(4),
-        primaryMixMode: "source-over",
-        secondaryMixMode: "hue",
-    });
-    const optsRef = useRef({
-        primary: Color(255, 255, 255, .5),
-        secondary: Color(0, 0, 0, .5),
-    });
+class BlendBgVisualizerCls {
+    constructor() {
+        this.primaryMixMode = "source-over";
+        this.secondaryMixMode = "source-over";
 
-    useEffect(() => {
-        //Update "global" values from options
-        if (options) {
-            optsRef.current = options;
-        }
-    }, [options])
-    
-    const doFrame = (canvas) => {
-        const {w, h, pCalc, sCalc, primaryMixMode, secondaryMixMode} = dataRef.current;
-        const {primary, secondary, gradientTimes} = optsRef.current;
-        const ctxt = canvas.getContext("2d");
+        this.options = {
+            primary: Color(255, 255, 255, .5),
+            secondary: Color(0, 0, 0, .5),
+        };
+    }
 
-        if (canvas.width !== w) {
-            canvas.width = w;
-        }
-        if (canvas.height !== h) {
-            canvas.height = h;
-        }
+    setOptions = (opts) => {
+        this.options = opts;
+    }
 
+    doFrame = (canvas, ctxt, w, h) => {
+        const {primary, secondary, gradientTimes} = this.options;
+        
         const songPos = SoundService2.getCurrentTime();
         
         const tx = gradientTimes ? ( songPos - gradientTimes[0]) / ( gradientTimes[1] - gradientTimes[0]) : 0;
@@ -72,26 +54,18 @@ const BlendBgVisualizer = ({options}) => {
             const lowColor = pc.scalarMultiplyNoAlpha(nlow);
             const midColor = sc.scalarMultiplyNoAlpha(nmid);
 
-            ctxt.globalCompositeOperation = primaryMixMode;
+            ctxt.globalCompositeOperation = this.primaryMixMode;
             ctxt.fillStyle = lowColor.getRGBAColorString();
             ctxt.fillRect(0, 0, w, h);
 
-            ctxt.globalCompositeOperation = secondaryMixMode;
+            ctxt.globalCompositeOperation = this.secondaryMixMode;
             ctxt.fillStyle = midColor.getRGBAColorString();
             ctxt.fillRect(0, 0, w, h);
 
         }
     };
 
-    const resizeCanvas = useCallback((w,h) => {
-        dataRef.current.w = Math.floor(w);
-        dataRef.current.h = Math.floor(h);
-    }, []);
-
-    return (
-        <Canvas key={"c"} drawFrame={doFrame} onResize={resizeCanvas} style={{mixBlendMode: options?.blendMode ? options.blendMode : "overlay"}}/>
-    )
-
 }
 
+const BlendBgVisualizer = new BlendBgVisualizerCls();
 export default BlendBgVisualizer;
