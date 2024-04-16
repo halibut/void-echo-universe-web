@@ -44,7 +44,7 @@ const SongData = {
                 secondary: Color(0,0,0,1),
                 gradientTimes: [0, 27.65],
             }},
-            {time: 27.65, viz: VIZ.BARS, options:{
+            {time: 27.65, viz: VIZ.ARCS, options:{
                 primary: Gradient(255,255,255,1, 32,32,128,1), 
                 secondary: Color(0, 0, 64, 0.95), 
                 gradientTimes: [27.65, 109.85],

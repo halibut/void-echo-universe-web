@@ -27,7 +27,7 @@ class StateApi {
             [this.KEYS.IMG_QUALITY]: "large",
             [this.KEYS.AUDIO_CONTROLS_EXPANDED]: false,
             [this.KEYS.VISUALIZER_TYPE]: "default",
-            [this.KEYS.SHOW_NOTES]: true,
+            [this.KEYS.SHOW_NOTES]: false,
             [this.KEYS.ZEN_MODE]: false,
             [this.KEYS.FULL_SCREEN]: false,
             [this.KEYS.REPEAT_MODE]: "none",
