@@ -28,7 +28,7 @@ function createSongScreen(sd) {
 }
 
 const pages = [
-  {screen: Splash, title:Constants.title, path: "/"},
+  {screen: Splash, title:Constants.title+" - "+Constants.artist, path: "/"},
   {screen: Title2, title:Constants.title, path:"/title", sound:SongData.track00},
   {screen: MainMenu, title:Constants.title+" - Menu", path:"/main", sound:SongData.track00},
   createSongScreen(SongData.track01),
@@ -43,7 +43,7 @@ const pages = [
   createSongScreen(SongData.track10),
   createSongScreen(SongData.track11),
   createSongScreen(SongData.track12),
-  {screen: Credits, title:"Credits", path:"/credits", sound:SongData.track00},
+  {screen: Credits, title:Constants.title+" - Credits", path:"/credits", sound:SongData.track00},
   //{screen: NasaTestPage, title:"Nasa Test", path:"/nasa"},
   //{screen: HelperPage, title:"helper", path:"/helper"}
 ]

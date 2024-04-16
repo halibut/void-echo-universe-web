@@ -16,6 +16,7 @@ import Visualizer from "./Visualizer";
 import debug, { subscribeDebugMessages } from "./Debug";
 import Utils from "../utils/Utils";
 import State from "../service/State";
+import Constants from "../constants";
 
 const DEFAULT_OPTS = {
   time: 1000,
@@ -80,6 +81,12 @@ function navReducer(state, action) {
     }
 
     const opts = { ...DEFAULT_OPTS, ...options };
+
+    if (newInd >= 0) {
+      document.title = screens[newInd].title;
+    } else {
+      document.title = Constants.title + " - Not Found";
+    }
 
     //If there's no transition time, then just update the indices
     if (!opts || !opts.time || opts.time <= 0 || newInd < 0) {
