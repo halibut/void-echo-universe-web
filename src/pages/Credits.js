@@ -26,7 +26,7 @@ const Credits = ({isLoadingOut, isLoadingIn, fullyLoaded}) => {
         <h1 className=''>{Constants.title} - Credits</h1>
         <div className='album-notes' >
           <p>The music, story, and website were created by {Constants.artist}.</p>
-          <p>The album art was created by Lizzie Baxter.</p>
+          <p>The album art was created by Lizzie Gray.</p>
           <p>
             All images are publicly available from NASA's&nbsp; 
             <Link style={{borderBottomWidth: 1, borderBottomColor:"#ddd", borderBottomStyle:'solid'}} foreign={true} path="https://images.nasa.gov/</p>" >Image and Video Library</Link>.
