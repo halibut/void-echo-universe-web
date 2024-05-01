@@ -71,12 +71,12 @@ const SongData = {
             {time: 371.1, viz: VIZ.BLEND_BG, options:{
                 primary: Gradient(255,255,255,1, 0,0,0,1),
                 secondary: Gradient(255,255,255,1, 0,0,0,1),
-                gradientTimes: [371.1, 395],
+                gradientTimes: [371.1, 385],
             }},
         ],
         links: {
             bandcamp: "https://voidecho.bandcamp.com/track/the-big-bang",
-            spotify: "",
+            spotify: "https://open.spotify.com/track/03F87j6EfsT4q11dr8Eu2f?si=c91529e326164985",
         },
     },
     track02: {
@@ -100,7 +100,7 @@ const SongData = {
         ],
         links: {
             bandcamp: "https://voidecho.bandcamp.com/track/cosmic-microwave-background",
-            spotify: "",
+            spotify: "https://open.spotify.com/track/09yjGet7NRn1KYwpVNjNDO?si=a58be893c7264f11",
         },
     },
     track03: {
@@ -120,7 +120,7 @@ const SongData = {
         ],
         links: {
             bandcamp: "https://voidecho.bandcamp.com/track/nebulae",
-            spotify: "",
+            spotify: "https://open.spotify.com/track/3EFzCoEEora1ZyVLaVd9UA?si=cc357a82feec49ef",
         },
     },
     track04: {
@@ -147,7 +147,7 @@ const SongData = {
         ],
         links: { 
             bandcamp: "https://voidecho.bandcamp.com/track/abiogenesis",
-            spotify: "",
+            spotify: "https://open.spotify.com/track/1jDdRll8dgOIgvc16RYTV8?si=72b3ad9147774153",
         },
     },
     track05: {
@@ -167,7 +167,7 @@ const SongData = {
         ],
         links: {
             bandcamp: "https://voidecho.bandcamp.com/track/canopies",
-            spotify: "",
+            spotify: "https://open.spotify.com/track/1XxXxxnmYUPDOIJSqH2vd2?si=602cf901a7424990",
         },
     },
     track06: {
@@ -224,7 +224,7 @@ const SongData = {
         ],
         links: {
             bandcamp: "https://voidecho.bandcamp.com/track/sapience",
-            spotify: "",
+            spotify: "https://open.spotify.com/track/5psiymVOaCNqqmfxgrp2qe?si=21cf6b09b8a14592",
         },
     },
     track07: {
@@ -244,7 +244,7 @@ const SongData = {
         ],
         links: {
             bandcamp: "https://voidecho.bandcamp.com/track/the-relentless-march-of-time",
-            spotify: "",
+            spotify: "https://open.spotify.com/track/79L5n3fKrExRVJZpFvJHai?si=b96f778f54aa440a",
         },
     },
     track08: {
@@ -278,7 +278,7 @@ const SongData = {
         ],
         links: {
             bandcamp: "https://voidecho.bandcamp.com/track/red-shift",
-            spotify: "",
+            spotify: "https://open.spotify.com/track/0fDjq9MfbpSLt9piANdC1o?si=778b5775c11241d6",
         },
     },
     track09: {
@@ -299,7 +299,7 @@ const SongData = {
         ],
         links: {
             bandcamp: "https://voidecho.bandcamp.com/track/collapsing-star",
-            spotify: "",
+            spotify: "https://open.spotify.com/track/1XVcvhjMg2tx3TmJsm4HCT?si=27d315d565914c9e",
         },
     },
     track10: {
@@ -328,7 +328,7 @@ const SongData = {
         ],
         links: {
             bandcamp: "https://voidecho.bandcamp.com/track/one-last-alarm-before-the-end",
-            spotify: "",
+            spotify: "https://open.spotify.com/track/6Eq9PeezAUNNUq7Q5w04Sx?si=9b9daee82fc34106",
         },
     },
     track11: {
@@ -369,7 +369,7 @@ const SongData = {
         ],
         links: {
             bandcamp: "https://voidecho.bandcamp.com/track/spacetime-will-be-torn-apart",
-            spotify: "",
+            spotify: "https://open.spotify.com/track/5pzjLjBaSQUJDiSVrUWEYd?si=b5e5e880004e4d9c",
         },
     },
     track12: {
@@ -395,7 +395,7 @@ const SongData = {
         ],
         links: {
             bandcamp: "https://voidecho.bandcamp.com/track/what-happens-now",
-            spotify: "",
+            spotify: "https://open.spotify.com/track/2KfPdKHMNtdHTXoT3XqMo8?si=e31748ced3b74070",
         },
     },
 };

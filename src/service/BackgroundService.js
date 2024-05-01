@@ -44,7 +44,7 @@ export function setBackgroundImage(src, options) {
 
 export function setDefaultBackground(transitionTime) {
     setBackgroundImage(require("../images/chapter_00_bg.jpg"), {
-        staticStyle: {transform:`scale(2)`, opacity:0.75},
+        staticStyle: {transform:`scale(2.5)`, opacity:0.75},
         imageClass: "spin-bg-slow",
         transitionTime: transitionTime ? transitionTime : 0,
     });

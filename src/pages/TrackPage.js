@@ -340,7 +340,7 @@ const TrackPage = ({
         <div className='center' style={{flex:1, width:'100%', paddingBottom:50, position:'relative'}}>
             <div className="col" style={{position:"absolute", left:0, top:0, width:"100%", height:"100%", cursor:"pointer"}} onClick={toggleControls} ></div>
 
-            {songText}
+            {fullyLoaded && (songText) }
 
             {imageAttribution}
 

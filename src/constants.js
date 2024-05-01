@@ -13,7 +13,7 @@ const Constants = {
 
   links: {
     bandcampAlbumURL: "https://voidecho.bandcamp.com/album/everything",
-    spotifyAlbumURL: "",
+    spotifyAlbumURL: "https://open.spotify.com/album/7HO9ObtbCRHv7wikH4XC1T?si=YlKm4ek_RDS832JXmdm2-g",
     email: {url:"mailto:voidechomusic@gmail.com", text:"voidechomusic@gmail.com"},
     twitter: {url:"https://twitter.com/V0ID_ECH0", text:"@V0ID_ECH0"},
     tiktok: {url:"https://www.tiktok.com/@v0id_ech0", text:"@v0id_ech0"},

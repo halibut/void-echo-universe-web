@@ -77,6 +77,7 @@ const Visualizer = () => {
     const visInstanceRef = useRef(null);
     const optsRef = useRef(createDefaultOptions());
     const visTypeRef = useRef(visType);
+    const visDataRef = useRef(null);
 
     useEffect(() => {
         const stateSub = State.subscribeToStateChanges(({state, value}) => {
@@ -87,8 +88,16 @@ const Visualizer = () => {
                 if (value === "none") {
                     visInstanceRef.current = null;
                 } else {
-                    visInstanceRef.current = getVizInstance(value, optsRef.current);
+                    visTypeRef.current = value;
+                    setVisType(value);
+
+                    if (value === "default" && visDataRef.current) {
+                        visInstanceRef.current = getVizInstance(visDataRef.current.viz.name, optsRef.current);
+                    } else {
+                        visInstanceRef.current = getVizInstance(value, optsRef.current);
+                    }
                 }
+                
             }
         });
     
@@ -134,6 +143,8 @@ const Visualizer = () => {
     }, []);
 
     const setVisualizer = (visData) => {
+        visDataRef.current = visData;
+
         if (visData.options?.blendMode) {
             setBlendMode(visData.options.blendMode);
         } else {
