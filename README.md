@@ -4,7 +4,7 @@ EVERYTHING is a concept album about the universe, time, and existential dread. T
 for the album, which you can experience here: [EVERYTHING](https://everything.voidechomusic.com)
 
 Use chrome for the best experience. There are a lot of inconsistencies in the way browser sound APIs work, and since this was a hobby/personal project
-I only focused on Chrome. It should theoretically work on other browsers, but YMMV.
+I only had time to focus on Chrome. It should theoretically work on other browsers, but YMMV.
 
 ## What is this for?
 
