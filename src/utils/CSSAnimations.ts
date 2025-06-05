@@ -1,5 +1,5 @@
 const CSSAnimations = {
-  addZoomInTransitionSlow: (onComplete) => {
+  addZoomInTransitionSlow: (onComplete:()=>void):string => {
     window.setTimeout(() => {
       if(onComplete) {
         onComplete();

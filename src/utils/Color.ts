@@ -1,8 +1,10 @@
-export class ColorObj {
-    components = new Array(4);
-    secondColor = null;
+type ColorType = number[]
 
-    constructor(r,g,b,a) {
+export class ColorObj {
+    components:ColorType = new Array(4);
+    secondColor:ColorObj | null = null;
+
+    constructor(r:number,g:number,b:number,a:number) {
         this.components[0] = Math.max(0, Math.min(r, 255));
         this.components[1] = Math.max(0, Math.min(g, 255));
         this.components[2] = Math.max(0, Math.min(b, 255));
@@ -11,10 +13,10 @@ export class ColorObj {
 
     /**
      * Create a new color that has a gradient from this color to the new color
-     * @param {*} secondColor 
+     * @param {ColorObj} secondColor 
      * @returns a new Color instance
      */
-    to = (secondColor) => {
+    to = (secondColor:ColorObj) => {
         const newCol = new ColorObj(
             this.components[0],
             this.components[1],
@@ -29,10 +31,10 @@ export class ColorObj {
 
     /**
      * Calculate the linear interpolation between colors in a gradient (if this Color has a gradient, otherwise just returns the color)
-     * @param {*} x value from 0 to 1 that represents the position along the linear gradient to calculate 0 being the base color, 1 being the gradient color
+     * @param {number} x value from 0 to 1 that represents the position along the linear gradient to calculate 0 being the base color, 1 being the gradient color
      * @returns the interpolated result Color
      */
-    getGradientColor = (x) => {
+    getGradientColor = (x:number) => {
         if (!this.secondColor) {
             return this;
         } else {
@@ -56,19 +58,18 @@ export class ColorObj {
 
     /**
      * 
-     * @returns {ColorObj}
+     * @returns {string}
      */
-    getRGBAColorString = () => {
+    getRGBAColorString = (): string => {
         return `rgba(${this.components[0]},${this.components[1]},${this.components[2]},${this.components[3]})`;
     }
 
     /**
      * Multiply the r, g, and b components with the scalar value
-     * @param {*} scalar 
      * @returns {ColorObj} returns a new ColorObj
      */
-    scalarMultiplyNoAlpha = (scalar) => {
-        return new Color(
+    scalarMultiplyNoAlpha = (scalar: number): ColorObj => {
+        return new ColorObj(
             this.components[0] * scalar,
             this.components[1] * scalar,
             this.components[2] * scalar,
@@ -76,8 +77,8 @@ export class ColorObj {
         );
     }
 
-    scalarMultiplyAlphaOnly = (scalar) =>{
-        return new Color(
+    scalarMultiplyAlphaOnly = (scalar: number) =>{
+        return new ColorObj(
             this.components[0],
             this.components[1],
             this.components[2],
@@ -87,10 +88,10 @@ export class ColorObj {
 
 }
 
-export function Color(r,g,b,a) {
+export function Color(r:number,g:number,b:number,a:number) {
     return new ColorObj(r,g,b,a);
 }
 
-export function Gradient(r1,g1,b1,a1, r2,g2,b2,a2) {
+export function Gradient(r1:number,g1:number,b1:number,a1:number, r2:number,g2:number,b2:number,a2:number) {
     return new ColorObj(r1,g1,b1,a1).to(new ColorObj(r2,g2,b2,a2));
 }

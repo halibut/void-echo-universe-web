@@ -1,6 +1,22 @@
 import { useRef, useEffect, useCallback } from "react";
 
-const Canvas = ({className, style, drawFrame, onResize}) => {
+interface CanvasStyle extends React.CSSProperties {
+
+}
+
+type CanvasProps = {
+  className?:string,
+  style?:CanvasStyle,
+  drawFrame: (canvas:any, context:CanvasRenderingContext2D)=>void,
+  onResize?: (w:number, h:number)=>void,
+}
+
+const Canvas: React.FC<CanvasProps> =  ({
+  className,
+  style,
+  drawFrame,
+  onResize
+}) => {
   const canvasRef = useRef({
     canvas: null,
     context: null,
@@ -97,7 +113,7 @@ const Canvas = ({className, style, drawFrame, onResize}) => {
     <div style={{width: '100%', height: '100%', flex:1}}>
       <canvas
         ref={setCanvasRef}
-        resize='true'
+        //resize='true'
         style={canvasStyle}
         className={className ? className : ""}
       />

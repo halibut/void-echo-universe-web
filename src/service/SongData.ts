@@ -1,10 +1,10 @@
 import imageCats from "../images/nasa-images-by-category";
 import AlbumNotes from "./AlbumNotes";
 import Constants from "../constants";
-import { VISUALIZERS as VIZ } from "../components/Visualizer";
+import { VisualizerOptionsType, VisualizerType, VISUALIZERS as VIZ } from "../components/Visualizer";
 import { Color, Gradient } from "../utils/Color";
 
-function getSongURL(fileName) {
+function getSongURL(fileName:string):string {
     if (Constants.USE_CDN === true) {
         return `${Constants.CDN_ROOT}${fileName}`;
     } else {
@@ -12,7 +12,42 @@ function getSongURL(fileName) {
     }
 }
 
-const SongData = {
+type SongSourceType = {
+    src: string,
+    type: "audio/mpeg" | "audio/ogg",
+}
+
+type NasaImageDataType = {
+    time: number,
+    slideTime: number,
+    images: string[],
+}
+
+type LinkDataType = {
+    bandcamp: string,
+    spotify: string,
+}
+
+type VisualizerData = {
+    time: number,
+    viz: VisualizerType,
+    options: VisualizerOptionsType,
+}
+
+type TrackType = {
+    title: string,
+    trackNumber?: number,
+    songLength?: string,
+    songSources: SongSourceType[],
+    notes: string,
+    nasaImages: NasaImageDataType[],
+    visualizer: VisualizerData[],
+    links: LinkDataType,
+}
+
+
+
+const SongData:{ [key: string]: TrackType } = {
     track00: {
         title: "ambient",
         songSources: [
@@ -21,6 +56,7 @@ const SongData = {
         ],
         notes: "This is a test!",
         nasaImages: [],
+        visualizer: [],
         links: {
             bandcamp: "https://google.com",
             spotify: "https://google.com",
@@ -197,7 +233,7 @@ const SongData = {
             }},
             {time: 129.47, viz: VIZ.ARCS, options:{
                 primary: Gradient(64,32,32,0.95, 0, 0, 0, 0.95),
-                secondary: Gradient(255,128,255,1.25, 64,32,32,32,1.25),
+                secondary: Gradient(255,128,255,1.25, 64,32,32,32),
                 gradientTimes: [129.47, 164.51],
                 heightScale: 0.6,
             }},

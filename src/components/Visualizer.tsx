@@ -4,9 +4,28 @@ import BlendBgVisualizer from "./visualizers/BlendBgVisualizer";
 import BarVisualizer from "./visualizers/BarVisualizer";
 import ArcVisualizer from "./visualizers/ArcVisualizer";
 import NGonVisualizer from "./visualizers/NGonVisualizer";
-import { Color } from "../utils/Color";
+import { Color, ColorObj } from "../utils/Color";
 import SoundService2 from "../service/SoundService2";
 import Canvas from "./Canvas";
+
+export interface VisualizerI {
+    setOptions(opts:object):void
+    doFrame(canvas:any, ctxt:CanvasRenderingContext2D, w:number, h:number):void
+}
+
+export type VisualizerType = {
+    name: String,
+    viz: VisualizerI
+}
+
+export type VisualizerOptionsType = {
+    numSides?: number,
+    primary:ColorObj,
+    secondary:ColorObj,
+    gradientTimes?:number[],
+    heightScale?:number,
+    blendMode?: "darken" | "multiply",
+}
 
 export const VISUALIZERS = {
     BLEND_BG: {
@@ -27,14 +46,14 @@ export const VISUALIZERS = {
     },
 };
 
-const createDefaultOptions = () => {
+const createDefaultOptions = ():VisualizerOptionsType => {
     return {
         primary: Color(255,255,255,0.5),
         secondary: Color(0,0,0,0.5),
     };
 };
 
-const getVizInstance = (visType, options) => {
+const getVizInstance = (visType:string, options:VisualizerOptionsType|null) => {
     let opts = options;
     if (!opts) {
         opts = createDefaultOptions();
