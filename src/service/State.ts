@@ -1,38 +1,37 @@
 import Subscription from "./Subscription";
 
+const StateKeyValues = [
+    "last-volume", "muted", "current-track", "img-quality", "audio-controls-expanded",
+    "visualizer-type", "show-notes", "zen-mode", "full-screen", "repeat",
+    "image-attribution", "debug-mode"
+] as const;
+
+export type StateKey = typeof StateKeyValues[number];
+
+export type StateEvent = {
+    state: StateKey,
+    value: any,
+}
+
 class StateApi {
+    state:{[key: string]:any} = {};
+    
+    stateSubscribers = new Subscription<StateEvent>("global-state");
 
     constructor() {
-        this.stateSubscribers = new Subscription("global-state");
-        
-        this.KEYS = {
-            LAST_VOLUME: "last-volume",
-            MUTED: "muted",
-            CURRENT_TRACK: "current-track",
-            IMG_QUALITY: "img-quality",
-            AUDIO_CONTROLS_EXPANDED: "audio-controls-expanded",
-            VISUALIZER_TYPE: "vizualizer-type",
-            SHOW_NOTES: "show-notes",
-            ZEN_MODE: "zen-mode",
-            FULL_SCREEN: "full-screen",
-            REPEAT_MODE: "repeat",
-            SHOW_IMAGE_ATTRIBUTION: "image-attribution",
-            DEBUG: "debug-mode",
-        }
-
         this.state = {
-            [this.KEYS.LAST_VOLUME]: 1,
-            [this.KEYS.MUTED]: false,
-            [this.KEYS.CURRENT_TRACK]: 1,
-            [this.KEYS.IMG_QUALITY]: "large",
-            [this.KEYS.AUDIO_CONTROLS_EXPANDED]: false,
-            [this.KEYS.VISUALIZER_TYPE]: "default",
-            [this.KEYS.SHOW_NOTES]: false,
-            [this.KEYS.ZEN_MODE]: false,
-            [this.KEYS.FULL_SCREEN]: false,
-            [this.KEYS.REPEAT_MODE]: "none",
-            [this.KEYS.SHOW_IMAGE_ATTRIBUTION]: false,
-            [this.KEYS.DEBUG]: false,
+            "last-volume": 1,
+            "muted": false,
+            "current-track": 1,
+            "img-quality": "large",
+            "audio-controls-expanded": false,
+            "visualizer-type": "default",
+            "show-notes": false,
+            "zen-mode": false,
+            "full-screen": false,
+            "repeat": "none",
+            "image-attribution": false,
+            "debug-mode": false,
         }
 
         const appStateStr = localStorage.getItem("app-state");
@@ -46,7 +45,7 @@ class StateApi {
         }
     }
 
-    getStateValue = (key, defaultVal) => {
+    getStateValue = (key:StateKey, defaultVal:any) => {
         const val = this.state[key];
         if(val !== undefined && val !== null) {
             return val;
@@ -56,7 +55,7 @@ class StateApi {
         }
     } 
 
-    setStateValue = (key, value) => {
+    setStateValue = (key:StateKey, value:any) => {
         if(value === null || value === undefined) {
             delete this.state[key];
             localStorage.setItem("app-state", JSON.stringify(this.state));
@@ -75,7 +74,7 @@ class StateApi {
         }
     }
 
-    subscribeToStateChanges = (subscriberFunction) => {
+    subscribeToStateChanges = (subscriberFunction:(evt:StateEvent)=>void) => {
         return this.stateSubscribers.subscribe(subscriberFunction);
     }
 }

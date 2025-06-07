@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { FC, useEffect } from "react";
 import SoundService2 from "../service/SoundService2";
 import SongData from "../service/SongData";
 import Link from "../components/Link";
@@ -6,9 +6,12 @@ import { setDefaultBackground } from "../service/BackgroundService";
 import SideMenu from "../components/SideMenu";
 import Constants from "../constants";
 import State from "../service/State";
+import { CommonScreenProps } from "../components/Navigator";
 
 
-const Credits = ({isLoadingOut, isLoadingIn, fullyLoaded}) => {
+interface CreditsProps extends CommonScreenProps {}
+
+const Credits:FC<CreditsProps> = ({isLoadingOut, isLoadingIn, fullyLoaded}) => {
 
   useEffect(() => {
     setDefaultBackground(3000);
@@ -43,7 +46,7 @@ const Credits = ({isLoadingOut, isLoadingIn, fullyLoaded}) => {
         <SideMenu />
       )}
 
-      <button style={{position:'absolute', right:0, top:100, width:50, height:50, backgroundColor:"#0004", border:"none" }} onClick={() => State.setStateValue(State.KEYS.DEBUG, true)}></button>
+      <button style={{position:'absolute', right:0, top:100, width:50, height:50, backgroundColor:"#0004", border:"none" }} onClick={() => State.setStateValue("debug-mode", true)}></button>
       
     </div>
   );

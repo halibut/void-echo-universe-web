@@ -5,20 +5,19 @@ import './styles/Content.css';
 import './styles/Animations.css';
 import './styles/Visualizers.css';
 
-import Navigator from './components/Navigator';
+import Navigator, { NavigationScreen } from './components/Navigator';
 import NotFound from './pages/NotFound';
 
 import Splash from './pages/Splash';
-import Title from './pages/Title';
 import Constants from './constants';
 import MainMenu from './pages/MainMenu';
 import { createTrackPage } from './pages/TrackPage';
-import SongData from './service/SongData';
+import SongData, { TrackDataType } from './service/SongData';
 import Utils from './utils/Utils';
 import Credits from './pages/Credits';
 import Title2 from './pages/Title2';
 
-function createSongScreen(sd) {
+function createSongScreen(sd:TrackDataType):NavigationScreen {
   return {
     screen: createTrackPage(sd),
     title: Constants.title+" - "+sd.title,
@@ -27,7 +26,7 @@ function createSongScreen(sd) {
   }
 }
 
-const pages = [
+const pages:NavigationScreen[] = [
   {screen: Splash, title:Constants.title+" - "+Constants.artist, path: "/"},
   {screen: Title2, title:Constants.title, path:"/title", sound:SongData.track00},
   {screen: MainMenu, title:Constants.title+" - Menu", path:"/main", sound:SongData.track00},

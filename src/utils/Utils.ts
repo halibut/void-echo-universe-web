@@ -1,12 +1,14 @@
-import { SongList } from "../service/SongData";
+import { SongList, TrackDataType } from "../service/SongData";
+
+type FFTLengthMemoData = {[key: number]: number[]}
 
 class UtilsApi {
-  #fftLogBuckets = {
+  #fftLogBuckets:{ [key: number]: FFTLengthMemoData} = {
 
   }
 
-  toSeconds = (string) => {
-    const parts = string.split(":");
+  toSeconds = (str:string) => {
+    const parts = str.split(":");
     const mins = +parts[0];
     const seconds = +parts[1];
 
@@ -21,7 +23,7 @@ class UtilsApi {
    * @param {*} highFreq The high end of the frequency range
    * @returns a structure containing {low, mid, high} magnitude values
    */
-  getFreqRangeAmounts = (fftData, sampleRate, lowFreqCutoff, highFreqCutoff) => {
+  getFreqRangeAmounts = (fftData:Uint8Array, sampleRate:number, lowFreqCutoff:number, highFreqCutoff:number) => {
     const bins = fftData.length;
     const freqsPerBin = sampleRate * .5 / bins;
     const lowBinCutoff = Math.max(1, Math.floor(lowFreqCutoff / freqsPerBin));
@@ -52,7 +54,7 @@ class UtilsApi {
     };
   }
 
-  fftDataToSmallerArray = (fftData, array, options) => {
+  fftDataToSmallerArray = (fftData:Uint8Array, array:number[], options:{freqStart?:number, freqEnd?:number}) => {
     const o = options ? options : {};
     const freqStart = o.freqStart ? o.freqStart : 0;
     const freqEnd = o.freqEnd ? o.freqEnd : 1;
@@ -90,7 +92,7 @@ class UtilsApi {
    * @param {int} fftDataLength 
    * @param {int} arrayLength 
    */
-  #getFftLogBuckets = (fftDataLength, arrayLength) => {
+  #getFftLogBuckets = (fftDataLength:number, arrayLength:number) => {
     let fftLengthMemo = this.#fftLogBuckets[fftDataLength];
     if (!fftLengthMemo) {
       fftLengthMemo = {};
@@ -124,7 +126,7 @@ class UtilsApi {
     return bucketsMemo;
   }
 
-  fftDataToSmallerArrayLogarithmic = (fftData, array) => {
+  fftDataToSmallerArrayLogarithmic = (fftData:Uint8Array, array:number[]) => {
     let i = 0;
     let j = 0;
     const l1 = fftData.length;
@@ -156,7 +158,7 @@ class UtilsApi {
     }
   };
 
-  shuffleArray = (array) => {
+  shuffleArray= <T>(array:T[]):T[] => {
     for (var i = array.length - 1; i > 0; i--) {
       var j = Math.floor(Math.random() * (i + 1));
       var temp = array[i];
@@ -167,25 +169,26 @@ class UtilsApi {
     return array;
   };
 
-  trackNameToPath = (name) => {
+  trackNameToPath = (name:string):string => {
     return "/" + name
       .toLowerCase()
       .replace(/\s+/ig, "-")
       .replace(/[^-a-z0-9]/ig, "")
   };
 
-  formatSeconds = (seconds) => {
+  formatSeconds = (seconds:number):string => {
     const mins = Math.floor(seconds / 60);
-    let remainderSecs = Math.floor(seconds % 60);
+    let remainderSecsNbr = Math.floor(seconds % 60);
 
-    if (remainderSecs < 10) {
-      remainderSecs = "0" + remainderSecs;
+    let remainderSecs = ""+remainderSecsNbr;
+    if (remainderSecsNbr < 10) {
+      remainderSecs = "0" + remainderSecsNbr;
     }
 
     return `${mins}:${remainderSecs}`;
   };
 
-  calculateNextSongPage = (songData, repeat) => {
+  calculateNextSongPage = (songData:TrackDataType, repeat:boolean):string => {
     const curPageIndex = SongList.findIndex(song => {
       return song.title === songData.title;
     });
@@ -200,7 +203,7 @@ class UtilsApi {
       return this.trackNameToPath(SongList[curPageIndex+1].title)
     }
   }
-  calculatePreviousSongPage = (songData, repeat) => {
+  calculatePreviousSongPage = (songData:TrackDataType, repeat:boolean):string => {
     const curPageIndex = SongList.findIndex(song => {
       return song.title === songData.title;
     });
@@ -215,7 +218,7 @@ class UtilsApi {
       return this.trackNameToPath(SongList[curPageIndex-1].title)
     }
   }
-  findPreviousSongData = (songData, repeat) => {
+  findPreviousSongData = (songData:TrackDataType, repeat:boolean):TrackDataType|null => {
     const curSongIndex = SongList.findIndex(song => {
       return song.title === songData.title;
     });
@@ -230,7 +233,7 @@ class UtilsApi {
       return SongList[curSongIndex-1];
     }
   }
-  findNextSongData = (songData, repeat) => {
+  findNextSongData = (songData:TrackDataType, repeat:boolean):TrackDataType|null => {
     const curSongIndex = SongList.findIndex(song => {
       return song.title === songData.title;
     });
@@ -256,7 +259,7 @@ class UtilsApi {
    * @param {*} outputArray optional array to keep the results, if not specified, a new array will be created
    * @returns the output array
    */
-  calculateGradientColor = (c1, c2, t1, t2, currentTime, outputArray) => {
+  calculateGradientColor = (c1:number[], c2:number[], t1:number, t2:number, currentTime:number, outputArray?:number[]):number[] => {
     if (currentTime <= t1) {
       return c1;
     } else if (currentTime >= t2) {

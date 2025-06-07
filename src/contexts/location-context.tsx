@@ -1,16 +1,30 @@
-import { createContext, useState, useEffect } from "react"
+import { createContext, useState, useEffect, FC } from "react"
 
-const LocationContext = createContext({path: "/"});
+type LocationDataType = {
+    path:string|null,
+    navOptions:NavigationOptions|null,
+}
+
+const LocationContext = createContext<LocationDataType>({path: "/", navOptions:{}});
 
 export default LocationContext;
 
+export type NavigationOptions = {
+
+}
+
+type PathChangedHandler = (path:string, navigationOptions:NavigationOptions|null)=>any
+
 class LocationServiceCls {
+    path:string|null = null;
+    onPathChanged:PathChangedHandler | null= null;
+
     constructor() {
         this.path = null;
         this.onPathChanged = null;
     }
 
-    handleLocation = (navigationOptions) => {
+    handleLocation = (navigationOptions:NavigationOptions|null) => {
         let p = window.location.pathname;
         if (p.length === 0) {
           p = "/";
@@ -24,7 +38,7 @@ class LocationServiceCls {
         }
     }
 
-    handleAnchorNav = (path, navigationOptions) => {
+    handleAnchorNav = (path:string, navigationOptions:NavigationOptions|null) => {
         console.log("Anchor clicked: " + path);
 
         this.setLocation(path, null, navigationOptions);
@@ -42,7 +56,7 @@ class LocationServiceCls {
     }
     */
 
-    setLocation = (path, windowTitle, navigationOptions) => {
+    setLocation = (path:string, windowTitle:string|null, navigationOptions:NavigationOptions|null) => {
         console.log("Changing location: "+path);
         window.history.pushState({}, "", path);
 
@@ -56,7 +70,7 @@ class LocationServiceCls {
         this.handleLocation(navigationOptions);
     }
 
-    init = (pathChangeHandler) => {
+    init = (pathChangeHandler:PathChangedHandler) => {
         this.onPathChanged = pathChangeHandler;
         window.onpopstate = this.handleLocation;
 
@@ -66,20 +80,20 @@ class LocationServiceCls {
 
 const LocationService = new LocationServiceCls();
 
-export function handleAnchorNav(path, navigationOptions) {
-    LocationService.handleAnchorNav(path, navigationOptions);
+export function handleAnchorNav(path:string, navigationOptions:NavigationOptions|null|undefined) {
+    LocationService.handleAnchorNav(path, navigationOptions? navigationOptions : null);
 };
 
-export function setLocation(path, windowTitle, navigationOptions) {
+export function setLocation(path:string, windowTitle:string|null, navigationOptions:NavigationOptions|null) {
     LocationService.setLocation(path, windowTitle, navigationOptions);
 };
 
-export function LocationContextProvider({children}) {
-    const [location, setLocation] = useState({path:null, navOptions:{}});
+export const LocationContextProvider:FC<React.PropsWithChildren> = ({children}) => {
+    const [location, setLocation] = useState<LocationDataType>({path:null, navOptions:{}});
 
     /** Set-up our location context function when this component loads */
     useEffect(() => {
-        const updateState = (path, navOptions) => {
+        const updateState = (path:string, navOptions:NavigationOptions|null) => {
             setLocation({path, navOptions});
         };
 

@@ -1,21 +1,12 @@
-import { useCallback, useEffect, useRef } from "react"
-import Sound from "../Sound";
 import SoundService2 from "../../service/SoundService2";
 import Utils from "../../utils/Utils";
-import Canvas from "../Canvas";
 import { Color } from "../../utils/Color";
+import { VisualizerI, VisualizerOptionsType } from "../Visualizer";
 
-
-const LOW_MULTIPLIER = 1 / 255;
-const MID_MULTIPLIER = 1 / 255;
-const HIGH_MULTIPLIER = 1 / 255;
-
-const LOW_FREQ = 400;
-const HIGH_FREQ = 4000;
 
 const TWO_PI = 3.14159 * 2;
 
-function createNGonPaths(innerRad, outerRad, numSides, segments, dutyCycle) {
+function createNGonPaths(innerRad:number, outerRad:number, numSides:number, segments:number, dutyCycle?:number) {
     const dc = dutyCycle ? dutyCycle : .75;
     const paths = new Array(segments);
     
@@ -65,28 +56,25 @@ function createNGonPaths(innerRad, outerRad, numSides, segments, dutyCycle) {
     return paths;
 }
 
-class NGonVisualizerCls {
-    constructor() {
-        this.barArray = new Array(50);
-        this.paths = null;
-        this.clearPath = null;
-        this.currentNumSides = 3;
-        this.primaryMixMode = "source-over";
-        this.secondaryMixMode = "source-over";
-
-        this.options = {
-            primary: Color(255, 255, 255, .5),
-            secondary: Color(0, 0, 0, .8),
-            numSides: 3,
-            inverse: false,
-        };
+class NGonVisualizerCls implements VisualizerI {
+    barArray:number[] = new Array(50);
+    paths:Path2D[]|null = null;
+    clearPath:Path2D|null = null;
+    currentNumSides:number = 3;
+    primaryMixMode:GlobalCompositeOperation = "source-over";
+    secondaryMixMode:GlobalCompositeOperation = "source-over";
+    options:VisualizerOptionsType = {
+        primary: Color(255, 255, 255, .5),
+        secondary: Color(0, 0, 0, .8),
+        numSides: 3,
+        inverse: false,
     }
 
-    setOptions = (opts) => {
+    setOptions = (opts:VisualizerOptionsType) => {
         this.options = opts;
     }
     
-    doFrame = (canvas, ctxt, w, h) => {
+    doFrame = (canvas:HTMLCanvasElement, ctxt:CanvasRenderingContext2D, w:number, h:number) => {
         let {paths, currentNumSides, clearPath} = this;
         const {primary, secondary, gradientTimes, inverse} = this.options;
         let numSides = this.options?.numSides ? this.options.numSides : 3;
@@ -126,7 +114,8 @@ class NGonVisualizerCls {
         const fftData = SoundService2.getFFTData();
         
         if (fftData) {
-            Utils.fftDataToSmallerArrayLogarithmic(fftData, this.barArray, {freqStart: 0, freqEnd: 1});
+            //Utils.fftDataToSmallerArrayLogarithmic(fftData, this.barArray, {freqStart: 0, freqEnd: 1});
+            Utils.fftDataToSmallerArrayLogarithmic(fftData, this.barArray);
 
             if (numSides === 1) {
                 ctxt.translate(hw, h);
@@ -139,7 +128,7 @@ class NGonVisualizerCls {
             //Set our arc style so that it removes alpha wherever it's drawn, and remove the clearPath
             ctxt.fillStyle = "rgba(0, 0, 0, 1.0)";
             ctxt.globalCompositeOperation = "xor";
-            ctxt.fill(clearPath);
+            ctxt.fill(clearPath!);
 
             //ctxt.globalCompositeOperation = "source-over";
             //ctxt.fillStyle = "#ffff";

@@ -1,14 +1,19 @@
 
 
-import { useCallback, useEffect, useRef} from "react";
+import { FC, ReactEventHandler, useCallback, useEffect, useRef} from "react";
 import debug from "./Debug";
-import SongData from "../service/SongData";
+import SongData, { TrackDataType } from "../service/SongData";
 import SoundService2 from "../service/SoundService2";
 
-const SoundElement = ({index, songData}) => {
-    const elementRef = useRef(null);
+type SoundElementProps = {
+    index: number,
+    songData: TrackDataType,
+}
 
-    const handleRef = useCallback((r) => {
+const SoundElement:FC<SoundElementProps> = ({index, songData}) => {
+    const elementRef = useRef<HTMLAudioElement|null>(null);
+
+    const handleRef = useCallback((r:HTMLAudioElement) => {
         elementRef.current = r;
         //debug(`Sound element [${index}] mounted: ${r}`);
 
@@ -19,7 +24,7 @@ const SoundElement = ({index, songData}) => {
         return <source key={s.src} src={s.src} type={s.type} />
     });
 
-    const handleError = (e) => {
+    const handleError:ReactEventHandler = (e) => {
         console.error(e);
         debug(`Error with sound[${index}]: ` +e);
     }

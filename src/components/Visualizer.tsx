@@ -1,20 +1,21 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { CSSProperties, useCallback, useEffect, useRef, useState } from "react";
 import State from "../service/State";
 import BlendBgVisualizer from "./visualizers/BlendBgVisualizer";
 import BarVisualizer from "./visualizers/BarVisualizer";
 import ArcVisualizer from "./visualizers/ArcVisualizer";
 import NGonVisualizer from "./visualizers/NGonVisualizer";
 import { Color, ColorObj } from "../utils/Color";
-import SoundService2 from "../service/SoundService2";
+import SoundService2, { SoundService2Cls } from "../service/SoundService2";
 import Canvas from "./Canvas";
+import { TrackDataType, VisualizerData } from "../service/SongData";
 
 export interface VisualizerI {
-    setOptions(opts:object):void
-    doFrame(canvas:any, ctxt:CanvasRenderingContext2D, w:number, h:number):void
+    setOptions: (opts:VisualizerOptionsType)=>any
+    doFrame: (canvas:HTMLCanvasElement, ctxt:CanvasRenderingContext2D, w:number, h:number)=>any
 }
 
 export type VisualizerType = {
-    name: String,
+    name: string,
     viz: VisualizerI
 }
 
@@ -25,9 +26,15 @@ export type VisualizerOptionsType = {
     gradientTimes?:number[],
     heightScale?:number,
     blendMode?: "darken" | "multiply",
+    inverse?:boolean,
 }
 
-export const VISUALIZERS = {
+type VisualizerEnumData = {
+    name: "blend-bg" | "bars" | "arcs" | "ngon",
+    viz: VisualizerI,
+}
+
+export const VISUALIZERS:{[key:string]:VisualizerEnumData} = {
     BLEND_BG: {
         name: "blend-bg",
         viz: BlendBgVisualizer,
@@ -80,27 +87,27 @@ const getVizInstance = (visType:string, options:VisualizerOptionsType|null) => {
         viz = VISUALIZERS.BLEND_BG;
     }
 
-    viz.viz.setOptions(options);
+    viz.viz.setOptions(options!);
     return viz.viz;
 } 
 
 
 const Visualizer = () => {
     const [blendMode, setBlendMode] = useState('overlay');
-    const [visType, setVisType] = useState(State.getStateValue(State.KEYS.VISUALIZER_TYPE, "default"));
+    const [visType, setVisType] = useState(State.getStateValue("visualizer-type", "default") as string);
 
-    const soundDataRef = useRef(null);
+    const soundDataRef = useRef<TrackDataType|null>(null);
 
     const dimensionsRef = useRef({w: 10, h:10});
 
-    const visInstanceRef = useRef(null);
+    const visInstanceRef = useRef<VisualizerI|null>(null);
     const optsRef = useRef(createDefaultOptions());
     const visTypeRef = useRef(visType);
-    const visDataRef = useRef(null);
+    const visDataRef = useRef<VisualizerData|null>(null);
 
     useEffect(() => {
         const stateSub = State.subscribeToStateChanges(({state, value}) => {
-            if (state === State.KEYS.VISUALIZER_TYPE) {
+            if (state === "visualizer-type") {
                 setVisType(value);
                 visTypeRef.current = value;
 
@@ -130,7 +137,7 @@ const Visualizer = () => {
         //set up time-based visualizer events.
         const soundEventSub = SoundService2.subscribeEvents((evt) => {
             switch(evt.event) {
-                case SoundService2.EVENTS.PLAYING: 
+                case SoundService2Cls.EVENTS.PLAYING: 
                     const soundData = SoundService2.getSoundData();
                     if (soundDataRef.current !== soundData) {
                         soundDataRef.current = soundData;
@@ -144,6 +151,7 @@ const Visualizer = () => {
                             } else {
                                 //Otherwise, set up a default visualizer
                                 SoundService2.registerTimeEvent(0, () => setVisualizer({
+                                    time: 0,
                                     viz: VISUALIZERS.BLEND_BG,
                                     options: createDefaultOptions(),
                                 }), true, true);
@@ -161,7 +169,7 @@ const Visualizer = () => {
         }
     }, []);
 
-    const setVisualizer = (visData) => {
+    const setVisualizer = (visData:VisualizerData) => {
         visDataRef.current = visData;
 
         if (visData.options?.blendMode) {
@@ -184,7 +192,7 @@ const Visualizer = () => {
         }
     }
 
-    const doFrame = (canvas, context) => {
+    const doFrame = (canvas:HTMLCanvasElement, context:CanvasRenderingContext2D) => {
         const {w, h} = dimensionsRef.current;
         if (canvas.width !== w) {
             canvas.width = w;
@@ -200,7 +208,7 @@ const Visualizer = () => {
         } 
     }
 
-    const resizeCanvas = useCallback((w,h) => {
+    const resizeCanvas = useCallback((w:number,h:number) => {
         dimensionsRef.current.w = Math.floor(w);
         dimensionsRef.current.h = Math.floor(h);
     }, []);
@@ -210,7 +218,7 @@ const Visualizer = () => {
     } else {
         return (
             <div key="vis-container" style={{position: 'absolute', top:0, left:0, width:"100%", height:"100%"}}>
-                <Canvas key={"c"} drawFrame={doFrame} onResize={resizeCanvas} style={{mixBlendMode: blendMode}}/>
+                <Canvas key={"c"} drawFrame={doFrame} onResize={resizeCanvas} style={{mixBlendMode: blendMode} as CSSProperties}/>
             </div>
         )
     }

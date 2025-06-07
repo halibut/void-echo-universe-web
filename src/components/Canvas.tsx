@@ -1,12 +1,9 @@
-import { useRef, useEffect, useCallback } from "react";
-
-interface CanvasStyle extends React.CSSProperties {
-
-}
+import { useRef, useEffect, useCallback, CSSProperties } from "react";
 
 type CanvasProps = {
+  key?:string
   className?:string,
-  style?:CanvasStyle,
+  style?:React.CSSProperties,
   drawFrame: (canvas:any, context:CanvasRenderingContext2D)=>void,
   onResize?: (w:number, h:number)=>void,
 }
@@ -17,13 +14,13 @@ const Canvas: React.FC<CanvasProps> =  ({
   drawFrame,
   onResize
 }) => {
-  const canvasRef = useRef({
+  const canvasRef = useRef<{canvas:HTMLCanvasElement|null, context:CanvasRenderingContext2D|null}>({
     canvas: null,
     context: null,
   });
-  const resizeTimeoutRef = useRef(null);
+  const resizeTimeoutRef = useRef<number|null>(null);
 
-  const animRef = useRef(null);
+  const animRef = useRef<number|null>(null);
 
   useEffect(() => {
     const draw = () => {
@@ -44,7 +41,7 @@ const Canvas: React.FC<CanvasProps> =  ({
     };
   }, [drawFrame]);
 
-  const setCanvasRef = useCallback((canvasElm) => {
+  const setCanvasRef = useCallback((canvasElm:HTMLCanvasElement) => {
     if (canvasElm) {
       canvasRef.current = {
         canvas: canvasElm,
@@ -59,7 +56,7 @@ const Canvas: React.FC<CanvasProps> =  ({
   }, []);
 
   useEffect(() => {
-    const callback = (entries) => {
+    const callback = (entries:ResizeObserverEntry[]) => {
       if(!canvasRef.current.canvas) {
         return;
       }
@@ -73,24 +70,33 @@ const Canvas: React.FC<CanvasProps> =  ({
 
         let boxSizeEntry = entries.find(e => e.contentBoxSize);
 
-        if(boxSizeEntry.contentBoxSize[0]) {
-          boxSizeEntry = boxSizeEntry.contentBoxSize[0];
-        }
+        if (boxSizeEntry) {
+          let h = 0;
+          let w = 0;
 
-        const h = boxSizeEntry.blockSize;
-        const w = boxSizeEntry.inlineSize;
+          if(boxSizeEntry.contentBoxSize[0]) {
+            h = boxSizeEntry.contentBoxSize[0].blockSize;
+            w = boxSizeEntry.contentBoxSize[0].inlineSize;
+          } else {
+            const cbs = boxSizeEntry.contentBoxSize as unknown as ResizeObserverSize
+            h = cbs.blockSize;
+            w = cbs.inlineSize;
+          }
 
-        console.log(`resize(${w},${h})`);
+          console.log(`resize(${w},${h})`);
 
-        if(onResize) {
-          onResize(w,h);
+          if(onResize) {
+            onResize(w,h);
+          }
         }
       }, 100);
     }
 
     const resizeObserver = new ResizeObserver(callback);
 
-    resizeObserver.observe(canvasRef.current.canvas);
+    if (canvasRef.current.canvas) {
+      resizeObserver.observe(canvasRef.current.canvas);
+    }
 
     return () => {
       resizeObserver.disconnect();
@@ -102,7 +108,7 @@ const Canvas: React.FC<CanvasProps> =  ({
     };
   }, [onResize]);
 
-  const canvasStyle = style ? style : {};
+  const canvasStyle = style ? style : {} as CSSProperties;
 
   if (canvasStyle.width === undefined) {
     canvasStyle.width = "100%";

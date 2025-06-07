@@ -1,24 +1,26 @@
 import Utils from "../utils/Utils";
 import BackgroundService, { setDefaultBackground } from "./BackgroundService";
-import NasaImagesApi from "./NasaImagesApi";
-import SoundService2 from "./SoundService2";
+import NasaImagesApi, { NasaApiImageMetadata } from "./NasaImagesApi";
+import { TrackDataType } from "./SongData";
+import SoundService2, { SoundServiceEvent } from "./SoundService2";
 import State from "./State";
 import Subscription from "./Subscription";
 
 class SlideShowCls {
-    constructor() {
-        this.subscribers = new Subscription("slideshow");
-        this.currentSound = null;
-        this.imageSet = [];
-        this.slideTimeMillis = 30000;
-        this.nextImgTimeout = null;
+    subscribers = new Subscription<NasaApiImageMetadata>("slideshow");
+    currentSound:TrackDataType|null = null;
+    imageIndex:number|null = null;
+    imageSet:string[] = [];
+    slideTimeMillis = 30000;
+    nextImgTimeout:number|null = null;
 
+    constructor() {
         SoundService2.subscribeEvents(this.#handleSongEvents);
     }
 
-    #handleSongEvents = (evt) => {
+    #handleSongEvents = (evt:SoundServiceEvent) => {
         switch (evt.event) {
-            case SoundService2.EVENTS.PLAYING:
+            case "playing":
                 const soundData = SoundService2.getSoundData();
                 if (soundData) {
                     if (soundData !== this.currentSound) {
@@ -26,7 +28,7 @@ class SlideShowCls {
                             soundData.nasaImages.forEach(ni => {
                                 SoundService2.registerTimeEvent(ni.time, () => {
                                     this.#switchImageSet(ni.images, ni.slideTime * 1000);
-                                })
+                                }, false, false);
                             });
                         } else {
                             //If there are no nasa images, just load the default background back in
@@ -59,7 +61,7 @@ class SlideShowCls {
         }
     }
 
-    #switchImageSet = (imageSet, slideTimeMillis) => {
+    #switchImageSet = (imageSet:string[], slideTimeMillis:number) => {
         const imgs = imageSet.slice();
         Utils.shuffleArray(imgs);
         this.imageSet = imgs;
@@ -74,19 +76,19 @@ class SlideShowCls {
 
         const numImages = this.imageSet.length;
         if (numImages > 0) {
-            const imageId = this.imageSet[this.imageIndex % numImages];
+            const imageId = this.imageSet[this.imageIndex! % numImages];
             this.#showImage(imageId, this.slideTimeMillis);
         }
 
         this.nextImgTimeout = window.setTimeout(() => {
             this.nextImgTimeout = null;
-            this.imageIndex++;
+            this.imageIndex!++;
             this.#nextImage();
         }, this.slideTimeMillis);  
     }
 
-    #showImage = async (nasaId, slideTimeMillis) => {
-        const quality = State.getStateValue(State.KEYS.IMG_QUALITY, "large");
+    #showImage = async (nasaId:string, slideTimeMillis:number) => {
+        const quality = State.getStateValue("img-quality", "large");
 
         console.log(`Next Image [${nasaId}] (${slideTimeMillis}ms - quality=${quality})`);
 
@@ -125,7 +127,7 @@ class SlideShowCls {
         }
     }
 
-    subscribeToImageMetadata = (handler) => {
+    subscribeToImageMetadata = (handler:(metadata:NasaApiImageMetadata)=>any) => {
         return this.subscribers.subscribe(handler);
     }
 }

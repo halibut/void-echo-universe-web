@@ -5,11 +5,14 @@ import {
   useEffect,
   useReducer,
   useState,
+  PropsWithChildren,
+  FC,
+  ReactNode,
 } from "react";
 
 import LocationContext from "../contexts/location-context";
 import { setDefaultBackground } from "../service/BackgroundService";
-import Background from "../components/Background";
+import Background from "./Background";
 import Sound2 from "./Sound2";
 import AudioControls from "./AudioControls";
 import Visualizer from "./Visualizer";
@@ -17,13 +20,38 @@ import debug, { subscribeDebugMessages } from "./Debug";
 import Utils from "../utils/Utils";
 import State from "../service/State";
 import Constants from "../constants";
+import { TrackDataType } from "../service/SongData";
 
-const DEFAULT_OPTS = {
+const DEFAULT_OPTS:NavigationAnimOptions = {
   time: 1000,
   direction: "in",
 };
 
-const NavScreenContainer = ({
+export interface CommonScreenProps {
+  isLoadingIn:boolean,
+  isLoadingOut:boolean,
+  animOptions?:NavigationAnimOptions|null,
+  fullyLoaded?:boolean,
+}
+
+export type NavigationScreen = {
+  screen: React.ComponentType<CommonScreenProps>,
+  title: string,
+  path: string,
+  sound?: TrackDataType,
+}
+
+type NavigationAnimOptions = {
+  transitionInClass?:string,
+  time?:number
+  transitionOutClass?:string,
+  direction?: "in" | "out",
+}
+
+interface NavScreenContainerProps extends CommonScreenProps, PropsWithChildren {
+}
+
+const NavScreenContainer:FC<NavScreenContainerProps> = ({
   isLoadingIn,
   isLoadingOut,
   animOptions,
@@ -39,7 +67,7 @@ const NavScreenContainer = ({
       additionalClass = "zoom-in-in";
     }
     additionalStyle = {
-      animationDuration: `${animOptions.time}ms`,
+      animationDuration: `${animOptions? animOptions.time : 0}ms`,
     };
   }
   if (isLoadingOut) {
@@ -49,7 +77,7 @@ const NavScreenContainer = ({
       additionalClass = "zoom-in-out";
     }
     additionalStyle = {
-      animationDuration: `${animOptions.time}ms`,
+      animationDuration: `${animOptions? animOptions.time : 0}ms`,
     };
   }
 
@@ -60,14 +88,26 @@ const NavScreenContainer = ({
   );
 };
 
-function navReducer(state, action) {
+type NavReducerState = {
+  screenInd:number|null,
+  loadingScreenInd:number|null,
+  animOptions:NavigationAnimOptions|null,
+}
+
+type NavReducerAction = {
+  type: "start-transition" | "end-transition",
+  screens?: NavigationScreen[],
+  options?: NavigationAnimOptions,
+  path?: string,
+}
+
+function navReducer(state:NavReducerState, action:NavReducerAction):NavReducerState {
   const {
     screenInd,
     loadingScreenInd,
-    animOptions,
   } = state;
 
-  if (action.type === "start-transition") {
+  if (action.type === "start-transition" && action.screens) {
     const screens = action.screens;
     const options = action.options;
     const path = action.path;
@@ -115,19 +155,27 @@ function navReducer(state, action) {
       return state;
     }
   }
+  else {
+    return state;
+  }
 }
 
-const Navigator = ({ screens, NotFoundPage }) => {
+type NavigatorProps = {
+  screens: NavigationScreen[],
+  NotFoundPage: React.ComponentType<CommonScreenProps>,
+}
+
+const Navigator:FC<NavigatorProps> = ({ screens, NotFoundPage }) => {
   const [state, dispatch] = useReducer(navReducer, {screenInd: null, loadingScreenInd: null, animOptions: null});
 
-  const [showDebug, setShowDebug] = useState(State.getStateValue(State.KEYS.DEBUG), false);
+  const [showDebug, setShowDebug] = useState(State.getStateValue("debug-mode", false));
   const [d, setD] = useState(["debug"]);
 
-  const navAnimTimeout = useRef(null);
+  const navAnimTimeout = useRef<number|null>(null);
   
   const location = useContext(LocationContext);
 
-  const killTransition = useCallback((p) => {
+  const killTransition = useCallback(() => {
     if (navAnimTimeout.current) {
       window.clearTimeout(navAnimTimeout.current);
       navAnimTimeout.current = null;
@@ -135,7 +183,7 @@ const Navigator = ({ screens, NotFoundPage }) => {
     }
   },[]);
 
-  const startTransition = useCallback((p, options) => {
+  const startTransition = useCallback((p:string, options:NavigationAnimOptions|null) => {
     const opts = { ...DEFAULT_OPTS, ...options };
 
     dispatch({
@@ -161,7 +209,7 @@ const Navigator = ({ screens, NotFoundPage }) => {
     if (location && location.path !== null) {
       debug("Got Navigation change: "+JSON.stringify(location));
       const {path, navOptions} = location;
-      killTransition(path);
+      killTransition();
       startTransition(path, navOptions);
     }
   }, [location, killTransition, startTransition]);
@@ -170,7 +218,7 @@ const Navigator = ({ screens, NotFoundPage }) => {
     setDefaultBackground(1000);
 
     const stateSubscription = State.subscribeToStateChanges(evt => {
-      if (evt.state === State.KEYS.DEBUG) {
+      if (evt.state === "debug-mode") {
         setShowDebug(evt.value);
       }
     })
@@ -198,7 +246,7 @@ const Navigator = ({ screens, NotFoundPage }) => {
     animOptions
   } = state;
 
-  let CurrentComp = null;
+  let CurrentComp:React.ComponentType<CommonScreenProps>|null = null;
   if (screenInd !== null) {
     if (screenInd < 0 || screenInd > screens.length - 1) {
       CurrentComp = NotFoundPage;
@@ -207,7 +255,7 @@ const Navigator = ({ screens, NotFoundPage }) => {
     }
   }
 
-  let LoadingComp = null;
+  let LoadingComp:React.ComponentType<CommonScreenProps>|null = null;
   if (loadingScreenInd != null) {
     if (loadingScreenInd < 0 || loadingScreenInd > screens.length - 1) {
       LoadingComp = NotFoundPage;
@@ -218,8 +266,8 @@ const Navigator = ({ screens, NotFoundPage }) => {
   }
 
   //If a component is loading in then put it first in the stack so it's "underneath" the current component
-  const comps = [];
-  if (LoadingComp && animOptions.direction === "in") {
+  const comps:ReactNode[] = [];
+  if (LoadingComp && animOptions?.direction === "in") {
     comps.push(
       <NavScreenContainer key={loadingScreenInd}
         isLoadingIn={true} 
@@ -255,7 +303,7 @@ const Navigator = ({ screens, NotFoundPage }) => {
     );
   }
 
-  if (LoadingComp && animOptions.direction === "out") {
+  if (LoadingComp && animOptions?.direction === "out") {
     comps.push(
       <NavScreenContainer key={loadingScreenInd}
         isLoadingIn={true}
@@ -296,7 +344,7 @@ const Navigator = ({ screens, NotFoundPage }) => {
 
       { showDebug && (
         <div style={{position:'absolute', top:40, left:0, width:'100%', minHeight:50, minWidth:200, maxWidth:"100%", maxHeight:"35%", backdropFilter:"blur(5px)", backgroundColor:"#0003", color:"#fff", overflowY:"auto"}}>
-          <button onClick={() => {State.setStateValue(State.KEYS.DEBUG, false)}}>Close Debug Window</button>
+          <button onClick={() => {State.setStateValue("debug-mode", false)}}>Close Debug Window</button>
           {d.map((t, i) => <p key={i}>{t}</p>)}
         </div>
       )}

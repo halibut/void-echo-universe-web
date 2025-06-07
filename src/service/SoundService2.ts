@@ -1,7 +1,11 @@
 import State from "./State";
 import Subscription from "./Subscription";
 import debug from "../components/Debug";
-import Utils from "../utils/Utils";
+import { SongSourceType, TrackDataType } from "./SongData";
+
+declare global {
+    interface Window { webkitAudioContext: AudioContext; }
+}
 
 const AudioContext = window.AudioContext || window.webkitAudioContext;
 
@@ -22,36 +26,81 @@ const READY_STATES = {
     CAN_PLAY_THROUGH: 4
 };
 
-class SoundService2Cls {
+type SoundElementData = {
+    element:HTMLAudioElement|null;
+    data:TrackDataType|null;
+    touched:boolean;
+    touchPromise:Promise<any>|null;
+    loop?:boolean;
+    mediaSource:MediaElementAudioSourceNode|null;
+}
 
-    constructor(songs) {
-        this.soundSubscribers = new Subscription("sound-subs");
-        this.eventSubscribers = new Subscription("sound-events");
-        this.enabledSubscribers = new Subscription("ac-enabled-subs");
+type TimeEventHandler = (handlerTime:number, currentSongTime:number)=>void
 
-        this.activeIndex = -1;
-        this.options = {};
-        this.soundElements =[];
+type TimeEventData = {
+    time:number;
+    repeatable:boolean;
+    safeHandler:TimeEventHandler;
+    executeIfPassed:boolean;
+}
 
-        this.timeEvents = []
-        this.nextTimeEventInd = 0;
+export type SoundServiceEvent = {
+    event: "canplaythrough" | "30secondwarning" | "5secondwarning" | "1secondwarning" |
+           "seeked" | "playing" | "paused" | "ended" | "soundmounted",
+    seekTime?: number,
+    timeRemaining?: number,
+}
 
-        this.EVENTS = {
-            CAN_PLAY_THROUGH: "canplaythrough",
-            WARN_30_SECONDS_REMAINING: "30secondwarning",
-            WARN_5_SECONDS_REMAINING: "5secondwarning",
-            WARN_1_SECOND_REMAINING: "1secondwarning",
-            SEEKED: "seeked",
-            PLAYING: "playing",
-            PAUSED: "paused",
-            ENDED: "ended",
-            SOUND_MOUNTED: "soundmounted",
-        }
+export type SoundServiceStateEvent = {
+    enabled: boolean,
+    audioContextState: AudioContextState,
+}
 
+export type SetSoundOptions = {
+    play?:boolean,
+    loop?:boolean,
+    fadeOutBeforePlay?:number,
+}
+
+export class SoundService2Cls {
+    ac:AudioContext | null = null;
+    gainNode:GainNode | null = null;
+    fftNode:AnalyserNode | null = null;
+    fftBuffer:Uint8Array | null = null;
+    mediaTargetNode:GainNode | null = null;
+
+    soundSubscribers:Subscription<HTMLAudioElement> = new Subscription("sound-subs");
+    eventSubscribers:Subscription<SoundServiceEvent> = new Subscription("sound-events");
+    enabledSubscribers:Subscription<SoundServiceStateEvent> = new Subscription("ac-enabled-subs");
+    activeIndex:number = -1;
+    options:SetSoundOptions = {loop:false};
+    soundElements:SoundElementData[] = [];
+    timeEvents:TimeEventData[] = [];
+    nextTimeEventInd:number = 0;
+
+    private _readyToPlay:boolean = false;
+    private _readyState:number = -1;
+    private _warn30Seconds:boolean = false;
+    private _warn5Seconds:boolean = false;
+    private _warn1Second:boolean = false;
+
+    static EVENTS = {
+        CAN_PLAY_THROUGH: "canplaythrough",
+        WARN_30_SECONDS_REMAINING: "30secondwarning",
+        WARN_5_SECONDS_REMAINING: "5secondwarning",
+        WARN_1_SECOND_REMAINING: "1secondwarning",
+        SEEKED: "seeked",
+        PLAYING: "playing",
+        PAUSED: "paused",
+        ENDED: "ended",
+        SOUND_MOUNTED: "soundmounted",
+    };
+
+    constructor() {
         this.init();
     }
 
-    setSongData = (songData) => {
+    setSongData = (songData:{ [key: string]: TrackDataType} ) => {
        this.soundElements = Object.keys(songData).map(k => {
             const sd = songData[k];
             return {
@@ -79,10 +128,10 @@ class SoundService2Cls {
             //to control output volume. Attach to the destination node.
             this.gainNode = this.ac.createGain();
             this.gainNode.connect(this.ac.destination);
-            if (State.getStateValue(State.KEYS.MUTED, false)) {
+            if (State.getStateValue("muted", false)) {
                 this.gainNode.gain.linearRampToValueAtTime(0, this.ac.currentTime + 0.1);
             } else {
-                const lastVol = State.getStateValue(State.KEYS.LAST_VOLUME, 1);
+                const lastVol = State.getStateValue("last-volume", 1);
                 this.gainNode.gain.linearRampToValueAtTime(lastVol, this.ac.currentTime + 0.1);
             }
 
@@ -106,11 +155,11 @@ class SoundService2Cls {
             this.mediaTargetNode.connect(this.fftNode);
 
             //Set the gain/volume to whatever was last set by the user
-            if (State.getStateValue(State.KEYS.MUTED, false)) {
+            if (State.getStateValue("muted", false)) {
                 debug("Sound was muted last session.");
                 this.gainNode.gain.value = 0;
             } else {
-                const lastVol = State.getStateValue(State.KEYS.LAST_VOLUME, 1);
+                const lastVol = State.getStateValue("last-volume", 1);
                 debug("Last volume: "+lastVol);
                 this.gainNode.gain.value = lastVol;
             }
@@ -123,17 +172,17 @@ class SoundService2Cls {
         }
     };
 
-    _handleStateChange = (evt) => {
-        const state = evt.state;
+    _handleStateChange = () => {
+        const state = this.ac?.state;
         this.enabledSubscribers.notifySubscribers({
             enabled: state === "running",
-            audioContextState: state,
+            audioContextState: state ? state : "closed",
         });
     }
 
     isSuspended = () => {
         //debug("AC state: "+this.ac.state);
-        return this.ac.state !== 'running';
+        return this.ac && this.ac.state !== 'running';
     }
 
     /**
@@ -142,7 +191,7 @@ class SoundService2Cls {
      * The callback will be called synchronously whenever possible.
      * @param {*} callback 
      */
-    tryResume = (callback) => {
+    tryResume = (callback?:(success:boolean)=>void) => {
 
         //Some browsers won't let us set up an AudioContext at all until the user
         //has provided an input event. So this detects this case and tries to re-initialize
@@ -189,7 +238,7 @@ class SoundService2Cls {
         }
     }
 
-    registerElement = (element, index) => {
+    registerElement = (element:HTMLAudioElement, index:number) => {
         this.soundElements[index].element = element;
         debug("Song["+index+"] registered.");
     }
@@ -206,11 +255,11 @@ class SoundService2Cls {
      * @param {*} source 
      * @param {*} callback 
      */
-    touchSound = (source, callback) => {
+    touchSound = (source:SongSourceType[], callback?:(success:boolean)=>void) => {
         //Special case for IOS, just always try to resume
         this.tryResume();
         
-        const index = this.soundElements.findIndex(s => s.data.songSources === source);
+        const index = this.soundElements.findIndex(s => s.data?.songSources === source);
 
         const soundData = this.soundElements[index];
         const element = soundData?.element;
@@ -279,14 +328,14 @@ class SoundService2Cls {
      *   fadeOutBeforePlay: n (seconds to fade out existing sound before starting new sound)
      * @returns 
      */
-    setSound = (source, options) => {
+    setSound = (source:SongSourceType[], options:SetSoundOptions) => {
         debug("Attempting to set the sound.");
         //touchSound initializes the sound and makes sure it can play before calling our callback
         //function
         this.touchSound(source, (touchSuccessful) => {
             debug("Init touch successful: "+touchSuccessful);
 
-            const index = this.soundElements.findIndex(s => s.data.songSources === source);
+            const index = this.soundElements.findIndex(s => s.data?.songSources === source);
 
             if (this.activeIndex === index) {
                 debug("Same sound requested.");
@@ -314,8 +363,11 @@ class SoundService2Cls {
             debug("Initial Ready-To-Play")
 
             const soundElement = this.getAudioElement();
+            if (!soundElement) {
+                return;
+            }
 
-            this.eventSubscribers.notifySubscribers({event: this.EVENTS.CAN_PLAY_THROUGH});
+            this.eventSubscribers.notifySubscribers({event: "canplaythrough"});
             if (this.options.loop === true) {
                 soundElement.loop = true;
             }
@@ -329,8 +381,8 @@ class SoundService2Cls {
                 }).catch(e => {
                     debug("... error playing... "+e);
                 });
-                if (!State.getStateValue(State.KEYS.MUTED, false)) {
-                    const lastVol = State.getStateValue(State.KEYS.LAST_VOLUME, 1);
+                if (!State.getStateValue("muted", false)) {
+                    const lastVol = State.getStateValue("last-volume", 1);
                     this.setVolume(lastVol);
                 } 
             }
@@ -338,32 +390,32 @@ class SoundService2Cls {
         this._readyToPlay = true;
     }
 
-    _handleCanPlayThroughEvent = (e) => {
+    _handleCanPlayThroughEvent = () => {
         this._readyState = READY_STATES.CAN_PLAY_THROUGH;
 
         this._handleReadyToPlay();
     };
 
-    _handleTimeUpdateEvent = (e) => {
-        const elm = e.target;
+    _handleTimeUpdateEvent = (e:Event) => {
+        const elm = e.target as HTMLAudioElement;
         const currentTime = elm.currentTime;
         const timeRemaining = elm.duration - currentTime;
         if (!this._warn30Seconds && timeRemaining <= 30) {
             this._warn30Seconds = true;
-            this.eventSubscribers.notifySubscribers({event: this.EVENTS.WARN_30_SECONDS_REMAINING, timeRemaining:timeRemaining});
+            this.eventSubscribers.notifySubscribers({event: "30secondwarning", timeRemaining:timeRemaining});
         }
         if (!this._warn5Seconds && timeRemaining <= 5) {
             this._warn5Seconds = true;
-            this.eventSubscribers.notifySubscribers({event: this.EVENTS.WARN_5_SECONDS_REMAINING, timeRemaining:timeRemaining});
+            this.eventSubscribers.notifySubscribers({event: "5secondwarning", timeRemaining:timeRemaining});
         }
         if (!this._warn1Second && timeRemaining <= 1) {
             this._warn1Second = true;
-            this.eventSubscribers.notifySubscribers({event: this.EVENTS.WARN_1_SECOND_REMAINING, timeRemaining:timeRemaining});
+            this.eventSubscribers.notifySubscribers({event: "1secondwarning", timeRemaining:timeRemaining});
         }
 
         //Check to see if any registered time events need to fire
         if (this.nextTimeEventInd < this.timeEvents.length) {
-            let nextEvent = this.timeEvents[this.nextTimeEventInd];
+            let nextEvent:TimeEventData|null = this.timeEvents[this.nextTimeEventInd];
             
             //The .5 second lead time is because the timeUpdateEvent is only accurate potentially to
             //the quarter second. So this allows us to schedule with a little more fine-grained timing.
@@ -391,8 +443,8 @@ class SoundService2Cls {
         }
     };
 
-    _handleSeekedEvent = (e) => {
-        const elm = e.target;
+    _handleSeekedEvent = (e:Event) => {
+        const elm = e.target as HTMLAudioElement;
         const currentTime = elm.currentTime;
         const timeRemaining = elm.duration - currentTime;
         if (timeRemaining >= 30) {
@@ -404,12 +456,12 @@ class SoundService2Cls {
         if (timeRemaining >= 1) {
             this._warn1Second = false;
         }
-        this.eventSubscribers.notifySubscribers({event: this.EVENTS.SEEKED, seekTime:currentTime});
+        this.eventSubscribers.notifySubscribers({event: "seeked", seekTime:currentTime});
 
         //Handle any timeEvents that need to fire on passed time
         this.nextTimeEventInd = 0;
         if (this.timeEvents.length > 0) {
-            let nextEvent = this.timeEvents[this.nextTimeEventInd];
+            let nextEvent:TimeEventData|null = this.timeEvents[this.nextTimeEventInd];
             while(nextEvent && nextEvent.time < currentTime) {
                 if (nextEvent.executeIfPassed) {
                     nextEvent.safeHandler(nextEvent.time, currentTime);
@@ -426,8 +478,13 @@ class SoundService2Cls {
         }
     };
 
-    _handleProgressEvent = (e) => {
+    _handleProgressEvent = () => {
         const element = this.getAudioElement();
+
+        if(!element) {
+            return;
+        }
+
         this._readyState = element.readyState;
 
         if (this._readyState === READY_STATES.CAN_PLAY_THROUGH) {
@@ -435,22 +492,26 @@ class SoundService2Cls {
         }
     };
 
-    _handlePlayEvent = (e) => {
+    _handlePlayEvent = () => {
         debug("Started playing")
-        this.eventSubscribers.notifySubscribers({event: this.EVENTS.PLAYING});
+        this.eventSubscribers.notifySubscribers({event: "playing"});
     };
 
-    _handlePauseEvent = (e) => {
+    _handlePauseEvent = () => {
         debug("Paused")
-        this.eventSubscribers.notifySubscribers({event: this.EVENTS.PAUSED});
+        this.eventSubscribers.notifySubscribers({event: "paused"});
     };
 
-    _handleEndedEvent = (e) => {
+    _handleEndedEvent = () => {
         debug("Ended");
-        this.eventSubscribers.notifySubscribers({event: this.EVENTS.ENDED});
+        this.eventSubscribers.notifySubscribers({event: "ended"});
     };
 
-    loadFromAudioElement = (index, options) => {
+    loadFromAudioElement = (index:number, options:SetSoundOptions) => {
+        if(!this.ac) {
+            return;
+        }
+
         const existingElement = this.getAudioElement();
 
         if (existingElement) {
@@ -468,7 +529,7 @@ class SoundService2Cls {
         const sound = this.soundElements[this.activeIndex];
         const element = sound?.element;
         
-        if (element) {
+        if (element && this.mediaTargetNode) {
             this.options = options;
             element.load();
 
@@ -504,7 +565,7 @@ class SoundService2Cls {
             }
 
             this.soundSubscribers.notifySubscribers(element);
-            this.eventSubscribers.notifySubscribers({event: this.EVENTS.SOUND_MOUNTED});
+            this.eventSubscribers.notifySubscribers({event: "soundmounted"});
 
             return source;
         }
@@ -514,7 +575,7 @@ class SoundService2Cls {
     * Return the current audio element
     * @returns 
     */
-    getAudioElement = () => {
+    getAudioElement = ():HTMLAudioElement|null => {
         return this.soundElements[this.activeIndex]?.element;
     }
 
@@ -536,7 +597,7 @@ class SoundService2Cls {
     }
 
     getFFTData = () => {
-        if (this.fftNode) {
+        if (this.fftNode && this.fftBuffer) {
             this.fftNode.getByteFrequencyData(this.fftBuffer);
             return this.fftBuffer;
         }
@@ -546,24 +607,36 @@ class SoundService2Cls {
     }
 
     getVolume = () => {
-        return this.gainNode.gain.value;
+        if (this.gainNode) {
+            return this.gainNode.gain.value;
+        } else {
+            return 0;
+        }
     }
 
-    setVolume = (vol) => {
+    setVolume = (vol:number) => {
+        if(!this.ac || !this.gainNode) {
+            return;
+        }
+
         //This is called based on a mouse move event, so it's likely that volume events could overlap
         //This cancels any previous event and then schedules a new event to change the volume within .1 seconds
         //We do this to prevent popping/clicking sounds
         this.gainNode.gain.cancelScheduledValues(this.ac.currentTime);
         this.gainNode.gain.setValueAtTime(this.gainNode.gain.value, 0);
         this.gainNode.gain.linearRampToValueAtTime(Math.max(0, Math.min(vol, 1)), this.ac.currentTime + 0.1);
-        State.setStateValue(State.KEYS.LAST_VOLUME, vol);
+        State.setStateValue("last-volume", vol);
     }
 
     /**
      * Fade out sound over the specified time
      * @param {*} fadeDuration time in seconds
      */
-    fadeOut = (fadeDuration) => {
+    fadeOut = (fadeDuration:number) => {
+        if(!this.ac || !this.gainNode) {
+            return;
+        }
+
         //linear ramp starts at the time of the last event, so we need to create an event
         //first that sets the current gain to its existing value at the current time.
         this.gainNode.gain.cancelScheduledValues(this.ac.currentTime);
@@ -571,17 +644,21 @@ class SoundService2Cls {
         this.gainNode.gain.linearRampToValueAtTime(0.0, this.ac.currentTime + fadeDuration);
     }
 
-    setMuted = (muted) => {
+    setMuted = (muted:boolean) => {
+        if(!this.ac || !this.gainNode) {
+            return;
+        }
+
         if(muted) {
             this.gainNode.gain.setValueAtTime(this.gainNode.gain.value, 0);
             this.gainNode.gain.linearRampToValueAtTime(0, this.ac.currentTime + 0.1);
         }
         else {
-            const lastVol = State.getStateValue(State.KEYS.LAST_VOLUME, 1);
+            const lastVol = State.getStateValue("last-volume", 1);
             this.gainNode.gain.setValueAtTime(0, 0);
             this.gainNode.gain.linearRampToValueAtTime(lastVol, this.ac.currentTime + 0.1);
         }
-        State.setStateValue(State.KEYS.MUTED, muted);
+        State.setStateValue("muted", muted);
     };
 
     play = () => {
@@ -603,14 +680,14 @@ class SoundService2Cls {
         }
     }
 
-    seekTo = (time) => {
+    seekTo = (time:number) => {
         const element = this.getAudioElement();
         if (element) {
             element.currentTime = time;
         }
     }
 
-    getCurrentTime = () => {
+    getCurrentTime = ():number => {
         const element = this.getAudioElement();
         if (element) {
             return element.currentTime;
@@ -619,7 +696,7 @@ class SoundService2Cls {
         }
     }
 
-    getDuration = () => {
+    getDuration = ():number => {
         const element = this.getAudioElement();
         if (element) {
             return element.duration;
@@ -628,7 +705,7 @@ class SoundService2Cls {
         }
     }
 
-    isPaused = () => {
+    isPaused = ():boolean => {
         const element = this.getAudioElement();
         if (element) {
             return element.paused;
@@ -637,28 +714,32 @@ class SoundService2Cls {
         }
     }
     
-    isMuted = () => {
-        const lastVol = State.getStateValue(State.KEYS.LAST_VOLUME, 1);
+    isMuted = ():boolean => {
+        if (!this.gainNode) {
+            return true;
+        }
+
+        const lastVol = State.getStateValue("last-volume", 1);
         return this.gainNode.gain.value === 0 && lastVol !== 0;
     }
 
-    addSoundSubscriber = (handler) => {
+    addSoundSubscriber = (handler:(elm:HTMLAudioElement)=>void) => {
         return this.soundSubscribers.subscribe(handler);
     }
 
-    addSoundEnabledSubscriber = (handler) => {
+    addSoundEnabledSubscriber = (handler:(evt:SoundServiceStateEvent)=>void) => {
         return this.enabledSubscribers.subscribe(handler);
     }
 
-    subscribeEvents = (handler) => {
+    subscribeEvents = (handler:(evt:SoundServiceEvent)=>void) => {
         return this.eventSubscribers.subscribe(handler);
     }
 
-    registerTimeEvent = (time, handler, repeatable, executeIfPassed) => {
+    registerTimeEvent = (time:number, handler:TimeEventHandler, repeatable:boolean, executeIfPassed:boolean) => {
         //this.timeEvents is a sorted array of time/handler pairs
         //When we register a new timeEvent, we just need to make sure it stays sorted
 
-        const safeHandler = (handlerTime, currentSongTime) => {
+        const safeHandler = (handlerTime:number, currentSongTime:number) => {
             try {
                 handler(handlerTime, currentSongTime);
             } catch (e) {

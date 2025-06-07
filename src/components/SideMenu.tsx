@@ -8,15 +8,21 @@ import { MdEmail } from "react-icons/md";
 import { FaXTwitter } from "react-icons/fa6";
 import { IoLogoTiktok } from "react-icons/io5";
 import { IoLogoInstagram } from "react-icons/io5";
-import Link from "../components/Link";
-import State from "../service/State";
-import { useEffect, useRef, useState } from "react";
+import Link from "./Link";
+import State, { StateKey } from "../service/State";
+import { ChangeEvent, FC, ReactEventHandler, useEffect, useRef, useState } from "react";
 import Constants from "../constants";
 import Utils from "../utils/Utils";
 import SoundService2 from "../service/SoundService2";
-import SongData from "../service/SongData";
+import SongData, { TrackDataType } from "../service/SongData";
 
-const ToggleMenuItem = ({
+type ToggleMenuItemProps = {
+    optionName:string,
+    optionKey:StateKey,
+    defaultValue:boolean,
+}
+
+const ToggleMenuItem:FC<ToggleMenuItemProps> = ({
     optionName,
     optionKey,
     defaultValue,
@@ -49,7 +55,19 @@ const ToggleMenuItem = ({
     );
 }
 
-const MultiOptionMenuItem = ({optionKey, options, defaultValue, optionName}) => {
+type OptionData = {
+    value:string,
+    label:string,
+}
+
+type MultiOptionMenuItemProps = {
+    optionName:string,
+    options:OptionData[],
+    optionKey:StateKey,
+    defaultValue:string,
+}
+
+const MultiOptionMenuItem:FC<MultiOptionMenuItemProps> = ({optionKey, options, defaultValue, optionName}) => {
     const [keyVal, setKeyVal] = useState(State.getStateValue(optionKey, defaultValue));
   
     useEffect(() => {
@@ -64,7 +82,7 @@ const MultiOptionMenuItem = ({optionKey, options, defaultValue, optionName}) => 
       }
     });
   
-    const select = (e) => {
+    const select = (e:ChangeEvent<HTMLSelectElement>) => {
       State.setStateValue(optionKey, e.target.value);
     }
     
@@ -84,14 +102,18 @@ const MultiOptionMenuItem = ({optionKey, options, defaultValue, optionName}) => 
     )
   };
 
-const SideMenu = ({
+type SideMenuProps = {
+    songData?:TrackDataType
+}
+
+const SideMenu:FC<SideMenuProps> = ({
     songData,
 }) => {
     const [open, setOpen] = useState(false);
     const [showCopyMessage, setShowCopyMessage] = useState(false);
     const [fullscreen, setFullscreen] = useState(!!document.fullscreenElement);
 
-    const timeoutRef = useRef(null);
+    const timeoutRef = useRef<number|null>(null);
     
     useEffect(() => {
         return () => {
@@ -105,7 +127,7 @@ const SideMenu = ({
     const copyURL = () => {
         setShowCopyMessage(false);
         
-        navigator.clipboard.writeText(window.location);
+        navigator.clipboard.writeText(window.location.href);
 
         //Make sure we reset the state on the next frame
         window.setTimeout(() => {
@@ -121,7 +143,7 @@ const SideMenu = ({
         }, 5000);
     }
 
-    const toggleOpen = (e) => {
+    const toggleOpen:ReactEventHandler = (e) => {
         e.stopPropagation();
         setOpen(!open);
     };
@@ -131,7 +153,7 @@ const SideMenu = ({
             await document.exitFullscreen();
             setFullscreen(false);
         } else {
-            await document.getElementById("root").requestFullscreen();
+            await document.getElementById("root")!.requestFullscreen();
             setFullscreen(true);
         }
     }
@@ -142,7 +164,7 @@ const SideMenu = ({
 
     if (!open) {
         let additionalClass = "";
-        if (State.getStateValue(State.KEYS.ZEN_MODE)) {
+        if (State.getStateValue("zen-mode", false)) {
             additionalClass = "zen-mode";
         }
         return (
@@ -173,7 +195,7 @@ const SideMenu = ({
                     <span className="menu-title">Options</span>
                 </div>
                 <div> 
-                    <ToggleMenuItem optionKey={State.KEYS.ZEN_MODE} optionName={"Zen Mode"} defaultValue={false} />
+                    <ToggleMenuItem optionKey={"zen-mode"} optionName={"Zen Mode"} defaultValue={false} />
                 </div>
                 {(document.fullscreenEnabled) && (
                     <div> 
@@ -191,7 +213,7 @@ const SideMenu = ({
                 )}
                 <div>
                     <MultiOptionMenuItem 
-                        optionKey={State.KEYS.VISUALIZER_TYPE}
+                        optionKey={"visualizer-type"}
                         optionName={"Visualizer"}
                         defaultValue={"default"}
                         options={[
@@ -208,11 +230,11 @@ const SideMenu = ({
                 </div>
                 
                 <div>
-                    <ToggleMenuItem optionKey={State.KEYS.SHOW_IMAGE_ATTRIBUTION} optionName={"Image Attribution"} defaultValue={false} />
+                    <ToggleMenuItem optionKey={"image-attribution"} optionName={"Image Attribution"} defaultValue={false} />
                 </div>
                 <div>
                     <MultiOptionMenuItem 
-                        optionKey={State.KEYS.IMG_QUALITY}
+                        optionKey={"img-quality"}
                         optionName={"Image Quality"}
                         defaultValue={"large"}
                         options={[
@@ -240,13 +262,13 @@ const SideMenu = ({
                             </Link>
                         </div>
                         <div>
-                            <Link className="menu-link" foreign="true" path={songData.links.bandcamp} >
+                            <Link className="menu-link" foreign={true} path={songData.links.bandcamp} >
                                 <FaBandcamp />
                                 <span>bandcamp</span>
                             </Link>
                         </div>
                         <div >
-                            <Link className="menu-link" foreign="true" path={songData.links.spotify} >
+                            <Link className="menu-link" foreign={true} path={songData.links.spotify} >
                                 <FaSpotify />
                                 <span>Spotify</span>
                             </Link>
@@ -259,7 +281,7 @@ const SideMenu = ({
                             <span className="menu-title">Share Album</span>
                         </div>
                         <div >
-                            <Link className="menu-link" path={Constants.BASE_URL} overrideOnClick={copyURL}>
+                            <Link className="menu-link" path={Constants.BASE_URL!} overrideOnClick={copyURL}>
                                 <FiShare />
                                 <span>Copy URL</span>
                                 {showCopyMessage && (
@@ -268,13 +290,13 @@ const SideMenu = ({
                             </Link>
                         </div>
                         <div>
-                            <Link className="menu-link" foreign="true" path={Constants.links.bandcampAlbumURL} >
+                            <Link className="menu-link" foreign={true} path={Constants.links.bandcampAlbumURL} >
                                 <FaBandcamp />
                                 <span>bandcamp</span>
                             </Link>
                         </div>
                         <div >
-                            <Link className="menu-link" foreign="true" path={Constants.links.spotifyAlbumURL} >
+                            <Link className="menu-link" foreign={true} path={Constants.links.spotifyAlbumURL} >
                                 <FaSpotify />
                                 <span>Spotify</span>
                             </Link>
@@ -292,19 +314,19 @@ const SideMenu = ({
                     </Link>
                 </div>
                 <div>
-                    <Link className="menu-link" foreign="true" path={Constants.links.twitter.url} >
+                    <Link className="menu-link" foreign={true} path={Constants.links.twitter.url} >
                         <FaXTwitter />
                         <span style={{fontSize:".75em"}}>{Constants.links.twitter.text}</span>
                     </Link>
                 </div>
                 <div >
-                    <Link className="menu-link" foreign="true" path={Constants.links.tiktok.url} >
+                    <Link className="menu-link" foreign={true} path={Constants.links.tiktok.url} >
                         <IoLogoTiktok />
                         <span style={{fontSize:".75em"}}>{Constants.links.instagram.text}</span>
                     </Link>
                 </div>
                 <div >
-                    <Link className="menu-link" foreign="true" path={Constants.links.instagram.url} >
+                    <Link className="menu-link" foreign={true} path={Constants.links.instagram.url} >
                         <IoLogoInstagram />
                         <span style={{fontSize:".75em"}}>{Constants.links.instagram.text}</span>
                     </Link>

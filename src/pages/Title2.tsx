@@ -1,13 +1,17 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { FC, useCallback, useEffect, useRef, useState } from "react";
 import SoundService2 from "../service/SoundService2";
 import SongData from "../service/SongData";
 import { setLocation } from "../contexts/location-context";
 import { setDefaultBackground } from "../service/BackgroundService";
+import { CommonScreenProps } from "../components/Navigator";
 
-const Title2 = ({fullyLoaded}) => {
+interface TitleProps extends CommonScreenProps {
+}
+
+const Title2:FC<TitleProps> = ({fullyLoaded}) => {
     const [transitioning, setTransitioning] = useState(false);
     const nextRequested = useRef(false);
-    const autoTimeout = useRef(null);
+    const autoTimeout = useRef<number|null>(null);
     
     const next = useCallback(()=> {
         if (nextRequested.current) {

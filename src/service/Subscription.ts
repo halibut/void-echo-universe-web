@@ -1,11 +1,20 @@
-export default class Subscription {
-  constructor(name) {
+
+type SubscriptionListenerData<T> = {
+  subscriberKey: number,
+  onEvent: (e:T)=>void,
+  unsubscribe: ()=>void,
+}
+
+export default class Subscription<T> {
+  name:string;
+  listeners:SubscriptionListenerData<T>[] = [];
+  keyInd:number = 0;
+
+  constructor(name:string) {
     this.name = name;
-    this.listeners = [];
-    this.keyInd = 0;
   }
 
-  notifySubscribers = (event) => {
+  notifySubscribers = (event:T) => {
     this.listeners.forEach((sub) => {
       try {
         sub.onEvent(event);
@@ -18,7 +27,7 @@ export default class Subscription {
     });
   };
 
-  subscribe = (subscriberFunction) => {
+  subscribe = (subscriberFunction:(e:T)=>void) => {
     this.keyInd += 1;
     const subscriberKey = this.keyInd;
 
@@ -35,13 +44,13 @@ export default class Subscription {
     return sub;
   };
 
-  unsubscribe = (subscriberKey) => {
+  unsubscribe = (subscriberKey:number) => {
     this.listeners = this.listeners.filter(
       (sub) => sub.subscriberKey !== subscriberKey
     );
   };
 
   unsubscribeAll = () => {
-    this.listeneres = [];
+    this.listeners = [];
   };
 }

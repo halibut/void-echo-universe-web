@@ -1,16 +1,29 @@
-import { useCallback, useEffect, useReducer, useRef} from "react";
+import { CSSProperties, FC, ReactNode, useCallback, useEffect, useReducer, useRef} from "react";
 
-import BackgroundService from "../service/BackgroundService";
+import BackgroundService, { BackgroundImageData } from "../service/BackgroundService";
 
-const ImgContainer = ({imgSrc, options, isLoadingIn}) => {
-    const imgRef = useRef(null);
+type ImageContainerProps = {
+    imgSrc:string,
+    options:{
+        imageCSSProps?:CSSProperties,
+        staticStyle?:CSSProperties,
+        imageClass?:string,
+        imageStyle?:CSSProperties,
+        transitionTime?:number,
+    },
+    isLoadingIn:boolean,
+}
 
-    const setRef = (elm) => {
+const ImgContainer:FC<ImageContainerProps> = ({imgSrc, options, isLoadingIn}) => {
+    const imgRef = useRef<HTMLImageElement|null>(null);
+
+    const setRef = (elm:HTMLImageElement) => {
         imgRef.current = elm;
 
         if (elm && elm.style && options.imageCSSProps) {
             Object.keys(options.imageCSSProps).forEach((key) => {
-                elm.style.setProperty(key, options.imageCSSProps[key]);
+                const cssPropVal = options.imageCSSProps![key as keyof CSSProperties]!;
+                elm.style.setProperty(key, cssPropVal.toString());
             });
         }
     }
@@ -31,12 +44,33 @@ const ImgContainer = ({imgSrc, options, isLoadingIn}) => {
     )
 }
 
+type ImageActionOptions = {
+    forceReplace?:boolean
+    transitionTime?:number
+}
+
+interface BackgroundImage extends BackgroundImageData {
+    options:ImageActionOptions,
+    src: string,
+    key?: number,
+}
+
+type BackgroundReducerState = {
+    bgImage:BackgroundImage|null,
+    loadingImage:BackgroundImage|null,
+}
+
+type BackgroundReducerAction = {
+    type: "newImg" | "endAnim" | "clear",
+    img?: BackgroundImage
+}
+
 //Reducer takes the components initial state, and the action to be performed (the argument
 //when component calls dispatch), and returns the new state
-function bgReducer(state, action) {
+function bgReducer(state:BackgroundReducerState, action:BackgroundReducerAction):BackgroundReducerState {
     const {bgImage, loadingImage} = state;
 
-    if (action.type === "newImg") {
+    if (action.type === "newImg" && action.img) {
         const newImg = action.img;
 
         const opts = newImg.options ? newImg.options : {};
@@ -85,15 +119,18 @@ function bgReducer(state, action) {
             loadingImage: null,
         }
     }
+    else {
+        return state;
+    }
 }
 
 const Background = () => {
     //Trying out managing state via reducer, rather than individual state items
     const [state, dispatch] = useReducer(bgReducer, {bgImage: null, loadingImage: null});
 
-    const loadingTimeout = useRef(null);
+    const loadingTimeout = useRef<number|null>(null);
 
-    const updateBgImage = useCallback((newImg) => {
+    const updateBgImage = useCallback((newImg:BackgroundImageData) => {
         //Handle any existing loading animations
         if (loadingTimeout.current !== null) {
             window.clearTimeout(loadingTimeout.current);
@@ -122,7 +159,7 @@ const Background = () => {
 
     const {bgImage, loadingImage} = state;
 
-    const imgs = [];
+    const imgs:ReactNode[] = [];
     if (bgImage) {
         imgs.push(
             <ImgContainer key={bgImage.key} imgSrc={bgImage.src} options={bgImage.options} isLoadingIn={false} />

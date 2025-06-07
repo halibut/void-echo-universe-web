@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, FC, ReactEventHandler, CSSProperties, MouseEventHandler, SyntheticEvent } from "react";
 
 import {
   IoVolumeMute,
@@ -11,21 +11,25 @@ import SoundService2 from "../service/SoundService2";
 import Utils from "../utils/Utils";
 import State from "../service/State";
 
-const VolumeControl = ({uiExpanded}) => {
+type VolumeControlProps = {
+  uiExpanded:boolean,
+}
+
+const VolumeControl:FC<VolumeControlProps> = ({uiExpanded}) => {
   const [muted, setMuted] = useState(SoundService2.isMuted());
   const [vol, setVol] = useState(SoundService2.getVolume());
   const [expanded, setExpanded] = useState(false);
 
-  const onHover = (e) => {
+  const onHover:ReactEventHandler = (e) => {
     setExpanded(true);
   };
 
-  const onUnHover = (e) => {
+  const onUnHover:ReactEventHandler = (e) => {
     setExpanded(false);
   };
 
-  const onChangeVol = (e) => {
-    const newVol = e.target.value * 0.01;
+  const onChangeVol = (e:React.ChangeEvent<HTMLInputElement>) => {
+    const newVol = Number(e.target.value) * 0.01;
 
     SoundService2.setVolume(newVol);
     setVol(newVol);
@@ -35,7 +39,7 @@ const VolumeControl = ({uiExpanded}) => {
     }
   };
 
-  const onToggleMute = (e) => {
+  const onToggleMute:ReactEventHandler = (e) => {
     e.preventDefault();
 
     const newVal = !muted;
@@ -88,19 +92,30 @@ const VolumeControl = ({uiExpanded}) => {
   );
 };
 
-const PositionControl = ({uiExpanded}) => {
+
+type HoverTimeData = {
+  time: string,
+  x: number,
+  w: number,
+}
+
+type PositionControlProps = {
+  uiExpanded:boolean,
+}
+
+const PositionControl:FC<PositionControlProps> = ({uiExpanded}) => {
   const [expanded, setExpanded] = useState(false);
   const [pos, setPos] = useState(0);
-  const [hoverTime, setHoverTime] = useState(null);
-  const updateRef = useRef(null);
+  const [hoverTime, setHoverTime] = useState<HoverTimeData|null>(null);
+  const updateRef = useRef<number|null>(null);
 
   useEffect(() => {
     const soundEventSub = SoundService2.subscribeEvents((e) => {
       switch(e.event) {
-        case SoundService2.EVENTS.PLAYING:
+        case "playing":
           setPos(SoundService2.getCurrentTime());
           break;
-        case SoundService2.EVENTS.SEEKED:
+        case "seeked":
           setPos(SoundService2.getCurrentTime());
           break;
         default:
@@ -126,16 +141,16 @@ const PositionControl = ({uiExpanded}) => {
     };
   }, []);
 
-  const onEnter = useCallback((e) => {
+  const onEnter:ReactEventHandler = useCallback((e) => {
     setExpanded(true);
   }, []);
 
-  const onLeave = useCallback((e) => {
+  const onLeave:ReactEventHandler = useCallback((e) => {
     setExpanded(false);
     setHoverTime(null);
   }, []);
 
-  const handleMouseMove = useCallback((e) => {
+  const handleMouseMove:MouseEventHandler<HTMLDivElement> = useCallback((e) => {
     const divElm = e.currentTarget;
     const divWidth = divElm.offsetWidth;
     const xPos = e.clientX;
@@ -150,7 +165,7 @@ const PositionControl = ({uiExpanded}) => {
     });
   }, []);
 
-  const handleSeekChange = useCallback((e) => {
+  const handleSeekChange:MouseEventHandler<HTMLDivElement> = useCallback((e) => {
     const divElm = e.currentTarget;
     const divWidth = divElm.offsetWidth;
     const xPos = e.clientX;
@@ -171,25 +186,26 @@ const PositionControl = ({uiExpanded}) => {
       if (pos !== null) {
         const songPercent = pos / duration;
 
+        const left = songPercent < .2;
+
         const tStyle={
           backgroundColor: "transparent",
           fontSize: 20,
           position: "absolute",
-        }
+          color: left ? "#000" : "#333",
+          left: left ? "100%" : undefined, 
+          paddingLeft: left ? 5 : undefined,
+          right: left ? undefined : "0%",
+          paddingRight: left ? undefined : 5,
+        } as CSSProperties
 
-        if (songPercent < .2) {
-          tStyle.color = "#000";
-          tStyle.left = "100%";
-          tStyle.paddingLeft = 5;
-        } else {
-          tStyle.color = "#333";
-          tStyle.right = "0%";
-          tStyle.paddingRight = 5;
-        }
         posTimeText = <span style={tStyle}>{Utils.formatSeconds(pos)}</span>;
       }
       if (hoverTime) {
-        const tStyle = {
+        const toRightDist = hoverTime.w - hoverTime.x;
+        const left = hoverTime.x < 100;
+
+        const tStyle:CSSProperties = {
           position: "absolute",
           backgroundColor: "#0008",
           borderRadius: 3,
@@ -199,14 +215,9 @@ const PositionControl = ({uiExpanded}) => {
           color: "#fff",
           fontSize: 20,
           bottom: 0,
+          left: left ? hoverTime.x + 5 : undefined,
+          right: left ? undefined : toRightDist + 5,
         };
-
-        const toRightDist = hoverTime.w - hoverTime.x;
-        if (hoverTime.x < 100) {
-          tStyle.left = hoverTime.x + 5;
-        } else {
-          tStyle.right = toRightDist + 5;
-        }
 
         hoverTimeText = <span style={tStyle}>{hoverTime.time}</span>;
       }
@@ -236,11 +247,11 @@ const PositionControl = ({uiExpanded}) => {
 };
 
 const AudioControls = () => {
-  const [expanded, setExpanded] = useState(State.getStateValue(State.KEYS.AUDIO_CONTROLS_EXPANDED, false));
+  const [expanded, setExpanded] = useState(State.getStateValue("audio-controls-expanded", false));
 
   useEffect(() => {
     const sub = State.subscribeToStateChanges((e) => {
-      if (e.state === State.KEYS.AUDIO_CONTROLS_EXPANDED) {
+      if (e.state === "audio-controls-expanded") {
         setExpanded(e.value);
       }
     });
@@ -250,7 +261,7 @@ const AudioControls = () => {
     }
   }, []);
 
-  const expandControls = useCallback((e) => {
+  const expandControls = useCallback((e:SyntheticEvent) => {
     if (e) {
       e.preventDefault();
       e.stopPropagation();
@@ -259,7 +270,7 @@ const AudioControls = () => {
     setExpanded(true);
   }, []);
 
-  const shrinkControls = useCallback((e) => {
+  const shrinkControls = useCallback((e:SyntheticEvent) => {
     if (e) {
       e.preventDefault();
       e.stopPropagation();

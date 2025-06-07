@@ -12,7 +12,7 @@ function getSongURL(fileName:string):string {
     }
 }
 
-type SongSourceType = {
+export type SongSourceType = {
     src: string,
     type: "audio/mpeg" | "audio/ogg",
 }
@@ -28,13 +28,13 @@ type LinkDataType = {
     spotify: string,
 }
 
-type VisualizerData = {
+export type VisualizerData = {
     time: number,
     viz: VisualizerType,
     options: VisualizerOptionsType,
 }
 
-type TrackType = {
+export type TrackDataType = {
     title: string,
     trackNumber?: number,
     songLength?: string,
@@ -47,7 +47,7 @@ type TrackType = {
 
 
 
-const SongData:{ [key: string]: TrackType } = {
+const SongData:{ [key: string]: TrackDataType } = {
     track00: {
         title: "ambient",
         songSources: [

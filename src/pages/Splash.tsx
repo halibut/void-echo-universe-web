@@ -1,13 +1,16 @@
-import { useEffect } from 'react';
+import { FC } from 'react';
 import Link from '../components/Link';
 import SongData from '../service/SongData';
 import SoundService2 from '../service/SoundService2';
-import debug from "../components/Debug";
+import { CommonScreenProps } from '../components/Navigator';
 
-const Splash = ({isLoadingOut, animOptions}) => {
+interface SplashProps extends CommonScreenProps {
+}
+
+const Splash:FC<SplashProps> = ({isLoadingOut, animOptions}) => {
 
   let additionalClass = '';
-  let style = {flex:1, width:'100%', backgroundColor:"#000", animationDuration:"3000ms"};
+  let style:{[key:string]:any} = {flex:1, width:'100%', backgroundColor:"#000", animationDuration:"3000ms"};
   if (isLoadingOut) {
     additionalClass = "disolve-solid-black-bg";
     style.backgroundColor = undefined;

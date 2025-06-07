@@ -1,12 +1,49 @@
 import Constants from "../constants";
 import Utils from "../utils/Utils";
 
-class NasaImagesApiCls {
-    constructor() {
 
+type NasaSearchResultItemData = {
+    nasa_id:string,
+    title: string,
+    date_created: string,
+    center: string,
+    description: string, 
+}
+
+type NasaSearchResultItemLink = {
+    href:string
+}
+
+type NasaSearchResultItem = {
+    data:NasaSearchResultItemData[],
+    links:NasaSearchResultItemLink[],
+}
+
+type NasaAPISearchResult = {
+    collection: {
+        items: NasaSearchResultItem[],
     }
+}
 
-    searchImages = async (queryString) => {
+export type NasaSearchResult = {
+    nasaId:string,
+    title:string,
+    date:string,
+    center:string,
+    description:string,
+    thumb:string,
+}
+
+type NasaAPIImageResult = {
+    collection: {
+        items: {href:string}[]
+    }
+}
+
+export type NasaApiImageMetadata = {[key:string]:string}
+
+class NasaImagesApiCls {
+    searchImages = async (queryString:string):Promise<NasaSearchResult[]|null> => {
         try {
             const url = `${Constants.NASA_API}/search?media_type=image&q=${encodeURIComponent(queryString)}`;
             console.log("URL = "+url);
@@ -16,22 +53,20 @@ class NasaImagesApiCls {
             });
 
             if (resp.ok) {
-                const data = await resp.json();
+                const data = (await resp.json()) as NasaAPISearchResult;
 
                 const items = data.collection.items.map(item => {
                     if (item.data.length > 0) {
                         const d = item.data[0];
-                        const imgData = {
+                        const imgData:NasaSearchResult = {
                             nasaId: d.nasa_id,
                             title: d.title,
                             date: d.date_created,
                             center: d.center,
                             description: d.description,
+                            thumb: item.links.length > 0 ? item.links[0].href : '',
                         };
 
-                        if (item.links.length > 0) {
-                            imgData.thumb = item.links[0].href;
-                        }
                         return imgData;
                     }
                     else {
@@ -39,7 +74,7 @@ class NasaImagesApiCls {
                     }
                 });
 
-                const allItems = items.filter(i => i !== null);
+                const allItems = items.filter(i => i !== null) as NasaSearchResult[];
 
                 Utils.shuffleArray(allItems);
 
@@ -55,7 +90,7 @@ class NasaImagesApiCls {
         }
     }
 
-    getImageURLs = async (nasaAssetId) => {
+    getImageURLs = async (nasaAssetId:string) => {
         try {
             const resp = await fetch(`${Constants.NASA_API}/asset/${nasaAssetId}`, {
                 method: "GET",
@@ -63,8 +98,8 @@ class NasaImagesApiCls {
             });
 
             if (resp.ok) {
-                const data = await resp.json();
-                const resolutions = {};
+                const data = (await resp.json()) as NasaAPIImageResult;
+                const resolutions:{[key: string]:string} = {};
 
                 //Get all hrefs available for this asset
                 data.collection.items.forEach(item => {
@@ -106,7 +141,7 @@ class NasaImagesApiCls {
         }
     }
 
-    getImageMetadata = async (nasaAssetId) => {
+    getImageMetadata = async (nasaAssetId:string):Promise<NasaApiImageMetadata|null> => {
         try {
             const metaResp = await fetch(`${Constants.NASA_API}/metadata/${nasaAssetId}`, {
                 method: "GET",

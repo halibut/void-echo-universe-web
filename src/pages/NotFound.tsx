@@ -1,7 +1,6 @@
 import Link from '../components/Link';
 
-const NotFound = ({}) => {
-
+const NotFound = () => {
   return (
     <div className='center' style={{flex:1, width:'100%'}}>
       <div style={{maxWidth:400}}>

@@ -1,14 +1,20 @@
-import { useEffect, useState } from "react";
+import { FC, useEffect, useState } from "react";
 import State from "../service/State";
 import SoundService2 from "../service/SoundService2";
-import SongData from "../service/SongData";
+import SongData, { TrackDataType } from "../service/SongData";
 import Link from "../components/Link";
 import Utils from "../utils/Utils";
 import { setDefaultBackground } from "../service/BackgroundService";
 import SideMenu from "../components/SideMenu";
 import Constants from "../constants";
+import { CommonScreenProps } from "../components/Navigator";
 
-const TrackItem = ({songData, selected}) => {
+type TrackItemProps = {
+  songData:TrackDataType,
+  selected:boolean,
+}
+
+const TrackItem:FC<TrackItemProps> = ({songData, selected}) => {
   const color = selected ? '#bfd1ff' : "#ddd"; 
 
   const touchSong = () => {
@@ -29,14 +35,17 @@ const TrackItem = ({songData, selected}) => {
   )
 }
 
-const MainMenu = ({isLoadingOut, isLoadingIn, fullyLoaded}) => {
-  const [currentTrack, setCurrentTrack] = useState(State.getStateValue(State.KEYS.CURRENT_TRACK, 1));
+interface MainMenuProps extends CommonScreenProps {
+}
+
+const MainMenu:FC<MainMenuProps> = ({isLoadingOut, isLoadingIn, fullyLoaded}) => {
+  const [currentTrack, setCurrentTrack] = useState(State.getStateValue("current-track", 1));
 
   useEffect(() => {
     setDefaultBackground(3000);
 
     const trackSub = State.subscribeToStateChanges((stateEvent) => {
-      if(stateEvent.state === State.KEYS.CURRENT_TRACK) {
+      if(stateEvent.state === "current-track") {
         setCurrentTrack(stateEvent.value);
       }
     });

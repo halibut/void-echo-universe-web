@@ -1,24 +1,22 @@
 import SoundService2 from "../../service/SoundService2";
 import Utils from "../../utils/Utils";
 import { Color } from "../../utils/Color";
+import { VisualizerI, VisualizerOptionsType } from "../Visualizer";
 
-class BarVisualizerCls {
-    constructor() {
-        this.barArray = new Array(50);
-        this.primaryMixMode = "source-over";
-        this.secondaryMixMode = "source-over";
-
-        this.options = {
-            primary: Color(255, 255, 255, .5),
-            secondary: Color(0, 0, 0, .8),
-        };
+class BarVisualizerCls implements VisualizerI {
+    barArray:number[] = new Array(50);
+    primaryMixMode:GlobalCompositeOperation = "source-over";
+    secondaryMixMode:GlobalCompositeOperation = "source-over";
+    options:VisualizerOptionsType = {
+        primary: Color(255, 255, 255, .5),
+        secondary: Color(0, 0, 0, 0.8)
     }
 
-    setOptions = (opts) => {
+    setOptions = (opts:VisualizerOptionsType) => {
         this.options = opts;
     }
 
-    doFrame = (canvas, ctxt, w, h) => {
+    doFrame = (canvas:HTMLCanvasElement, ctxt:CanvasRenderingContext2D, w:number, h:number) => {
         const {primary, secondary, gradientTimes, heightScale} = this.options;
         
         //Set the background to all black

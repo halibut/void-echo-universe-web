@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState} from "react";
+import { FC, ReactNode, SyntheticEvent, useCallback, useEffect, useRef, useState} from "react";
 import SoundService2 from "../service/SoundService2";
 import State from "../service/State";
 import Utils from "../utils/Utils";
@@ -16,14 +16,21 @@ import {
 
 import { setLocation } from "../contexts/location-context";
 import SlideShow from "../service/Slideshow";
+import { TrackDataType } from "../service/SongData";
+import { NasaApiImageMetadata } from "../service/NasaImagesApi";
+import { CommonScreenProps } from "../components/Navigator";
+
+interface TrackPageProps extends CommonScreenProps {
+    songData:TrackDataType,
+}
 
 /**
  * Returns a component that is basically a wrapper around TrackPage, but with the specified songDat.
  * @param {*} songData 
  * @returns 
  */
-export function createTrackPage(songData) {
-    return ({isLoadingOut, isLoadingIn, fullyLoaded, animOptions}) => {
+export function createTrackPage(songData:TrackDataType) {
+    return ({isLoadingOut, isLoadingIn, fullyLoaded, animOptions}:CommonScreenProps) => {
         return (
             <TrackPage 
                 songData={songData}
@@ -36,70 +43,70 @@ export function createTrackPage(songData) {
     }
 }
 
-const TrackPage = ({
+const TrackPage:FC<TrackPageProps> = ({
     songData,
     isLoadingOut,
     animOptions,
     fullyLoaded,
     isLoadingIn,
 }) => {
-    const [zenMode, setZenMode] = useState(State.getStateValue(State.KEYS.ZEN_MODE, false));
-    const [showNotes, setShowNotes] = useState(State.getStateValue(State.KEYS.SHOW_NOTES, true));
+    const [zenMode, setZenMode] = useState(State.getStateValue("zen-mode", false));
+    const [showNotes, setShowNotes] = useState(State.getStateValue("show-notes", true));
     const [showControls, setShowControls] = useState(false);
-    const [showImageAttribution, setShowImageAttribution] = useState(State.getStateValue(State.KEYS.SHOW_IMAGE_ATTRIBUTION, false));
+    const [showImageAttribution, setShowImageAttribution] = useState(State.getStateValue("image-attribution", false));
     const [paused, setPaused] = useState(SoundService2.isPaused() || SoundService2.isSuspended());
     const [fadingControls, setFadingControls] = useState(false);
-    const [repeatMode, setRepeatMode] = useState(State.getStateValue(State.KEYS.REPEAT_MODE));
+    const [repeatMode, setRepeatMode] = useState(State.getStateValue("repeat", "none"));
 
-    const [imageMetadata, setImageMetadata] = useState(null);
+    const [imageMetadata, setImageMetadata] = useState<NasaApiImageMetadata|null>(null);
 
-    const controlsTimeoutRef = useRef(null);
-    const fadeoutControlsRef = useRef(null);
-    const nextTrackTimeoutRef = useRef(null);
+    const controlsTimeoutRef = useRef<number|null>(null);
+    const fadeoutControlsRef = useRef<number|null>(null);
+    const nextTrackTimeoutRef = useRef<number|null>(null);
     
-    const goToPrevious = useCallback((e) => {
+    const goToPrevious = useCallback((e?:SyntheticEvent) => {
         if (e) {
             e.stopPropagation();
             e.preventDefault();
         }
-        const repeatAlbum = State.getStateValue(State.KEYS.REPEAT_MODE, "none") === "album";
+        const repeatAlbum = State.getStateValue("repeat", "none") === "album";
         const sd = Utils.findPreviousSongData(songData, repeatAlbum);
         if (sd) {
             SoundService2.touchSound(sd.songSources);
         }
         const prevURL = Utils.calculatePreviousSongPage(songData, repeatAlbum);
-        setLocation(prevURL);
+        setLocation(prevURL, null, null);
     }, [songData]);
 
-    const goToNext = useCallback((e) => {
+    const goToNext = useCallback((e?:SyntheticEvent) => {
         if (e) {
             e.stopPropagation();
             e.preventDefault();
         }
-        const repeatAlbum = State.getStateValue(State.KEYS.REPEAT_MODE, "none") === "album";
+        const repeatAlbum = State.getStateValue("repeat", "none") === "album";
         const sd = Utils.findNextSongData(songData, repeatAlbum);
         if (sd) {
             SoundService2.touchSound(sd.songSources);
         }
         const nextURL = Utils.calculateNextSongPage(songData, repeatAlbum);
-        setLocation(nextURL);
+        setLocation(nextURL, null, null);
     }, [songData]);
 
     useEffect(() => {
         //Play the song for this track
-        State.setStateValue(State.KEYS.CURRENT_TRACK, songData.trackNumber);
+        State.setStateValue("current-track", songData.trackNumber);
         //console.log("Setting sound: " + JSON.stringify(songData.title));
         SoundService2.setSound(songData.songSources, {
             play:true,
             fadeOutBeforePlay: 2,
-            loop: State.getStateValue(State.KEYS.REPEAT_MODE, "none") === "track",
+            loop: State.getStateValue("repeat", "none") === "track",
         });
 
         const soundEventSub = SoundService2.subscribeEvents((e) => {
             switch (e.event) {
-                case SoundService2.EVENTS.WARN_30_SECONDS_REMAINING: {
+                case "30secondwarning": {
                         //Start loading the next track if we get near the end of this one
-                        const repeatMode = State.getStateValue(State.KEYS.REPEAT_MODE, "none");
+                        const repeatMode = State.getStateValue("repeat", "none");
                         if (repeatMode !== "track") {
                             const nextSong = Utils.findNextSongData(songData, repeatMode === "album");
                             if (nextSong) {
@@ -108,12 +115,13 @@ const TrackPage = ({
                         }
                     }
                     break;
-                case SoundService2.EVENTS.WARN_1_SECOND_REMAINING: 
+                case "1secondwarning": 
                     //On desktop platforms, attempt to queue up the next song so it plays more seamlessly
                     if (!Utils.isIOS()) {
-                        const time = Math.floor(Math.min(1000, Math.max(e.timeRemaining, 0) * 1000 - 50));
+                        const tRemaining = e.timeRemaining ? e.timeRemaining : 0;
+                        const time = Math.floor(Math.min(1000, Math.max(tRemaining, 0) * 1000 - 50));
                         //Set short timeout to play the next track if we get to the end of this one
-                        const repeatMode = State.getStateValue(State.KEYS.REPEAT_MODE, "none");
+                        const repeatMode = State.getStateValue("repeat", "none");
                         if (repeatMode !== "track") {
                             
                             nextTrackTimeoutRef.current = window.setTimeout(() => {
@@ -133,12 +141,12 @@ const TrackPage = ({
                         }
                     }
                     break;
-                case SoundService2.EVENTS.ENDED: 
+                case "ended": 
                     //On IOS, we can only start playback of the next song from a user interaction or 
                     //from the "ended" event. This code block is essentially fired within the context
                     //of the "ended" event which allows the next song to play on IOS.
                     if (Utils.isIOS()) {
-                        const repeatMode = State.getStateValue(State.KEYS.REPEAT_MODE, "none");
+                        const repeatMode = State.getStateValue("repeat", "none");
                         if (repeatMode !== "track") {
                             const nextSong = Utils.findNextSongData(songData, repeatMode === "album");
                             if (nextSong) {
@@ -153,10 +161,10 @@ const TrackPage = ({
                         }
                     }
                     break;
-                case SoundService2.EVENTS.PLAYING: 
+                case "playing": 
                     setPaused(false);
                     break;
-                case SoundService2.EVENTS.PAUSED:
+                case "paused":
                     setPaused(true);
                     if (controlsTimeoutRef.current) {
                         window.clearTimeout(controlsTimeoutRef.current);
@@ -181,16 +189,16 @@ const TrackPage = ({
     useEffect(() => {
         const stateSub = State.subscribeToStateChanges((stateEvent) => {
             switch (stateEvent.state) {
-                case State.KEYS.SHOW_NOTES:
+                case "show-notes":
                     setShowNotes(stateEvent.value);
                     break;
-                case State.KEYS.ZEN_MODE:
+                case "zen-mode":
                     setZenMode(stateEvent.value);
                     break; 
-                case State.KEYS.SHOW_IMAGE_ATTRIBUTION:
+                case "image-attribution":
                     setShowImageAttribution(stateEvent.value);
                     break;
-                case State.KEYS.REPEAT_MODE:
+                case "repeat":
                     setRepeatMode(stateEvent.value);
                     break;
                 default:
@@ -224,7 +232,7 @@ const TrackPage = ({
         };
     }, []);
 
-    const startHidingControls = useCallback((time) => {
+    const startHidingControls = useCallback((time:number) => {
         if (controlsTimeoutRef.current) {
             window.clearTimeout(controlsTimeoutRef.current);
             controlsTimeoutRef.current = null;
@@ -238,7 +246,7 @@ const TrackPage = ({
             fadeoutControlsRef.current = window.setTimeout(() => {
                 fadeoutControlsRef.current = null;
                 setShowControls(false);
-                State.setStateValue(State.KEYS.AUDIO_CONTROLS_EXPANDED, false);
+                State.setStateValue("audio-controls-expanded", false);
             }, 250);
         };
 
@@ -250,7 +258,7 @@ const TrackPage = ({
 
     }, []);
 
-    const togglePause = useCallback((e) => {
+    const togglePause = useCallback((e:SyntheticEvent) => {
         if (e) {
             e.stopPropagation();
         }
@@ -268,22 +276,22 @@ const TrackPage = ({
         }
     }, [startHidingControls]);
 
-    const cycleRepeat = useCallback((e) => {
+    const cycleRepeat = useCallback((e:SyntheticEvent) => {
         e.preventDefault();
         e.stopPropagation();
         if (repeatMode === "album") {
-            State.setStateValue(State.KEYS.REPEAT_MODE, "track");
+            State.setStateValue("repeat", "track");
         } else if ( repeatMode === "track" ) {
-            State.setStateValue(State.KEYS.REPEAT_MODE, "none");
+            State.setStateValue("repeat", "none");
         } else {
-            State.setStateValue(State.KEYS.REPEAT_MODE, "album");
+            State.setStateValue("repeat", "album");
         }
     }, [repeatMode]);
 
-    const toggleControls = useCallback((e) => {
+    const toggleControls = useCallback((e:SyntheticEvent) => {
         e.stopPropagation();
         if (!showControls) {
-            State.setStateValue(State.KEYS.AUDIO_CONTROLS_EXPANDED, true)
+            State.setStateValue("audio-controls-expanded", true)
             setShowControls(true);
             startHidingControls(10000);
         } else {
@@ -291,9 +299,9 @@ const TrackPage = ({
         }
     }, [showControls, startHidingControls]);
 
-    let songText = null;
+    let songText:ReactNode = null;
     if (!zenMode) {
-        let albumNotes = null;
+        let albumNotes:ReactNode = null;
         if (showNotes) {
             const paragraphs = songData.notes.split("\n").map((paragraph, ind) => {
                 return (
@@ -314,7 +322,7 @@ const TrackPage = ({
                 <button
                     type="button"
                     className="album-notes-expand-button"
-                    onClick={() => State.setStateValue(State.KEYS.SHOW_NOTES, !showNotes)}
+                    onClick={() => State.setStateValue("show-notes", !showNotes)}
                 >
                     {showNotes ? (
                         <MdOutlineExpandLess />
@@ -327,7 +335,7 @@ const TrackPage = ({
         );
     }
 
-    let imageAttribution = null;
+    let imageAttribution:ReactNode = null;
     if (showImageAttribution && imageMetadata && !zenMode) {
         imageAttribution = (
             <div className="image-attribution">
