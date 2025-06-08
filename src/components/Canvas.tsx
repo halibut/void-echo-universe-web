@@ -83,8 +83,6 @@ const Canvas: React.FC<CanvasProps> =  ({
             w = cbs.inlineSize;
           }
 
-          console.log(`resize(${w},${h})`);
-
           if(onResize) {
             onResize(w,h);
           }

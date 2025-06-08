@@ -47,8 +47,6 @@ const pages:NavigationScreen[] = [
   //{screen: HelperPage, title:"helper", path:"/helper"}
 ]
 
-console.log("App Pages:", JSON.stringify(pages));
-
 function App() {
   return (
     <LocationContextProvider>

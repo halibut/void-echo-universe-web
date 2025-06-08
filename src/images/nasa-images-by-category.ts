@@ -1,4 +1,4 @@
-const nasaImagesByCat = {
+const nasaImagesByCat:{[key:string]:string[]} = {
   blackHole: [
     "PIA10221",
     "PIA16114",

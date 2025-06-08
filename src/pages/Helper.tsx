@@ -1,3 +1,4 @@
+import { CommonScreenProps } from "../components/Navigator";
 import blackHole from "../images/artist-black-hole-images";
 import planets from "../images/artist-planet-images";
 import bigBang from "../images/big-bang-images";
@@ -24,12 +25,15 @@ import sun from "../images/sun-images";
 import supermassive from "../images/supermassive-images";
 import supernova from "../images/supernova-images";
 
-import { useEffect, useState } from "react";
+import { FC, useEffect } from "react";
+import { NasaSearchResult } from "../service/NasaImagesApi";
 
-const HelperPage = ({nav, fullyLoaded}) => {
+interface HelperPageProps extends CommonScreenProps{}
+
+const HelperPage:FC<HelperPageProps> = () => {
 
     useEffect(() => {
-        const imgsByCat = {
+        const imgsByCat:{[key:string]:NasaSearchResult[]} = {
             blackHole,
             bigBang,
             cmb,
@@ -57,7 +61,7 @@ const HelperPage = ({nav, fullyLoaded}) => {
             supernova
         };
 
-        const imgIdsByCat = {};
+        const imgIdsByCat:{[key:string]:string[]} = {};
         Object.keys(imgsByCat).forEach( (category) => {
             const rawData = imgsByCat[category];
             const ids = rawData.map(d => d.nasaId);

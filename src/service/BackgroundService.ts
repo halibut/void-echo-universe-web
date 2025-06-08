@@ -21,10 +21,6 @@ export type BackgroundImageData = {
 class BackgroundServiceCls {
     bgImage:BackgroundImageData|null = null;
     changeHandler:(newImg:BackgroundImageData)=>void = ()=>{};
-    
-    //TODO: remove this once we know there are no references
-    //attribData:
-    //bgSubscribers = new Subscription("background-changes");
 
     setBgChangeHandler = (handleFunc:(newImg:BackgroundImageData)=>void) => {
         this.changeHandler = handleFunc;
@@ -38,19 +34,6 @@ class BackgroundServiceCls {
         }
     }
 
-    //TODO: remove once we've checked references
-    // setBgAttribData = (data) => {
-    //     this.attribData = data;
-    //     this.bgSubscribers.notifySubscribers(data);
-    // }
-
-    // getCurrentBgAttribData = () => {
-    //     return this.attribData;
-    // }
-
-    // subscribeToAttribData = (handler) => {
-    //     return this.bgSubscribers.subscribe(handler);
-    // }
 }
 
 const BackgroundService = new BackgroundServiceCls();
@@ -67,7 +50,4 @@ export function setDefaultBackground(transitionTime:number) {
         imageClass: "spin-bg-slow",
         transitionTime: transitionTime ? transitionTime : 0,
     });
-    
-    //TODO: remove after we check references
-    //BackgroundService.setBgAttribData(null);
 }

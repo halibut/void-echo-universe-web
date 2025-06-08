@@ -137,13 +137,13 @@ const AlbumNotes = {
     Life was a transient peak. On a timeline with no end, it wouldn't even register.`,
     relentlessMarch: `One Planck time is roughly 10^-43 seconds. For a species born billions of years later, it is incomprehensibly short.
 
-    And yet, it could be said that the most interesting thing to ever happen in the universe, did so within that tiny duration. As gravity is the curvature of spacetime, it's difficult to know if time itself even behaved the same, before gravity existed as a distinct force.
+    And yet, it could be said that the most interesting thing to ever happen in the universe, did so within that tiny duration. Before gravity existed as a distinct force, it's difficult to know if time itself behaved the way it did after.
     
-    What is known is that within the first Planck time, everything that would ever exist and everything that would ever happen in the universe was set in motion.
+    What is known is that, within the first Planck time, everything that would ever exist and everything that would ever happen in the universe was set in motion.
     
     —
     
-    From the moment of the big bang, the universe began expanding. The stars will eventually burn through their fuel, and the night sky will become dark and cold. The expansion will last forever.
+    From the moment of the big bang, the universe began its expansion. In time, the last stars will eventually burn through their fuel, and the night sky will become dark and cold. But the universe will expand forever.
     
     Black holes will remain for a long time. A timeline too massive to comprehend for a species born into such a young universe. But even the black holes will radiate away, evaporating into nothing. It will be 10^100 years or more for the largest ones.
     
@@ -153,9 +153,9 @@ const AlbumNotes = {
     
     —
     
-    A Planck time is dwarfed by the time it took for the universe to produce the 4 distinct forces that govern its interactions.
+    The Planck unit of time is dwarfed by the duration it took for the universe to produce the 4 distinct forces that govern its interactions.
     
-    Which itself is dwarfed by the time to cool and expand and form the first atoms.
+    Which itself is dwarfed by the time to cool, and expand, and form the first atoms.
     By the time for nebulae to give birth to the first stars.
     For life to emerge.
     For intelligent species to expand to the edges of their galaxies. 
@@ -168,24 +168,24 @@ const AlbumNotes = {
     But all of it is dwarfed by the time to come. The time of cold darkness. A time so long that, by comparison, even these incomprehensible durations are reduced to nothing.`,
     redShift: `Scientists from the blue planet could see it coming. Even before they left for other stars.
 
-    They had evolved to see a spectrum of electromagnetic radiation, so-called “visible light”. At the high-energy end of the spectrum, light had a shorter wavelength and they called it “blue”. At the low-energy end, the wavelength was longer and they called it “red”
+    They had evolved to see a spectrum of electromagnetic radiation, so-called “visible light”. At the high-energy end of the spectrum, light had a shorter wavelength. They they called this light “blue”. At the low-energy end, the wavelength was longer, and they called it “red”.
         
-    A curious property of waves is that their perceived energy is affected by the relative velocity between the source of the wave and the observer.
+    A curious property of waves is that their perceived energy is determined by the relative velocity between the source of the wave and the observer.
         
-    When the source and the observer are moving closer together, from the observer's perspective, the wavelengths are more energetic. The waves crash into the observer at a faster rate, which makes light appear more blue than what was actually emitted from the source. They called this phenomenon a "blue shift".
+    When the source and the observer are moving closer together, from the observer's perspective, the wavelengths are more energetic. The waves crash into the observer at a faster rate, which makes light appear more blue than what was actually emitted from the source. This phenomenon is called a "blue shift".
     
-    When source and observer move away from each other, the opposite happens. The observer sees less energetic light. The waves crash less frequently, and light appears to be more red, and it follows that they called this a "red shift".
+    When source and observer move away from each other, the opposite happens. The observer sees less energetic light. The waves crash less frequently, and light appears to be more red, a phenomenon called a "red shift".
         
     —
         
-    Their scientists observed that light from certain galaxies was more red than others. In fact, the greater the distance to the observed galaxy, the redder its light.
+    The scientists observed that light from certain galaxies was redder than others. In fact, the greater the distance to the observed galaxy, the more its light was red-shifted.
         
     The only explanation was that the galaxies were moving away from one another. Not only moving away, but *accelerating* away from one another. Space itself was expanding in the empty void between the stars, and stretching light along with it.`,
     collapsingStar: `The brightest stars in the universe live the shortest lives, and die in the most spectacular way.
 
-    Their massive gravity wells ignite a fusion reaction that burns through their fuel, hydrogen at first, but then heavier and heavier elements. Until they contain a core of too much iron, the first element whose fusion energy is too large to keep the sun's furnace going. 
+    Their massive gravity wells ignite a fusion reaction that burns through their fuel, hydrogen at first, but then heavier and heavier elements, until they contain a core of too much iron, the first element whose fusion energy is too large to keep the sun's furnace going. 
     
-    A star’s fusion reaction is at odds with the force of gravity. The massive energy output creates an extreme pressure that prevents the sun from completely collapsing under its own weight. But the sudden loss of the fusion reaction is the final losing battle. The core collapses and then explodes, leaving behind a neutron star or a black hole, and sometimes releasing as much light as an entire galaxy. The violence of this act is nearly unmatched by anything in the universe. 
+    A star’s fusion reaction is at odds with the force of gravity. The massive energy output creates an extreme pressure that prevents the sun from completely collapsing under its own weight. But when the fusion rection stops, it finally loses its war with gravity. The core collapses and then explodes, leaving behind a neutron star or a black hole, and sometimes releasing as much light as an entire galaxy. The violence of this act is nearly unmatched by anything in the universe. 
     
     It's the fate of all large stars, but also part of a larger cycle. The supernova fuses heavier elements and sends its matter into nebulae as seeds for new stars.`,
     oneLastAlarm: `Some of the scientists from the blue planet were unsatisfied by the red shifted galaxies and the conclusion it led to. 
@@ -200,18 +200,18 @@ const AlbumNotes = {
     
     Some of them tried to prepare.
     
-    Some of them thought it was preferable, compared to the cold dark infinite alternative.
+    Some of them thought it might be preferable, compared to the cold dark infinite alternative.
     
     And some of them sounded the alarm, even though there was nothing they could do about it.`,
-    spacetime: `First, the galaxies began disappearing. Space expanded and the light from other galaxies began to be outpaced, pushing them outside their limited bubble of visible universe. Local starlight, produced by stars within their own galaxy, was all that existed for a long time.
+    spacetime: `First, the galaxies began disappearing. Space expanded and the light from other galaxies began to be outpaced, pushing them outside the limited bubble of visible universe. Local starlight, produced by stars within their own galaxy, was all that existed for a long time.
 
     No one lived on the blue planet anymore, but their descendant's eyes watched from around the Milky Way. From one vantage point, near the galactic center, stars at the galaxy’s edge turned deep red. Slowly at first, and then the red crept toward them. 
     
-    More and more stars accelerated outward as the space between them expanded. Stars at the edge began disappearing as they too left the visible universe. This happened long before their eyes could detect that the light wasn’t reaching them anymore.
+    More and more stars accelerated outward as the space between them expanded. Stars at the edge began to disappear as their light left the visible universe. This happened long before they could detect that the light's absence'.
     
-    After a short time, only local gravity could overcome expansion. A pair of eyes on a planet orbiting its star could only see the star system itself.
+    After a short time, only local gravity could overcome the expansion. A pair of eyes on a planet orbiting its star could only see their local star system.
     
-    But space kept expanding. In an instant, the furthest planets disappeared. The star disappeared. The air became vacuum. And the bonds holding molecules together were overcome and split by that ever expanding space. Any life that could have existed in the universe was undone.
+    Space kept expanding. In an instant, the furthest planets disappeared. The star disappeared, the air became vacuum, and the bonds holding molecules together were overcome and torn apart by that ever-expanding space. Any life that could have existed in the universe was undone.
     
     And while that was the last moment any living thing could perceive what was happening, it was not where it ended.
     
@@ -236,13 +236,13 @@ const AlbumNotes = {
     
     Maybe the end was the start of a new beginning. A new big bang and a new universe.
     
-    Maybe a fifth fundamental force separated itself and the universe would inflate again, settling into a new type of equilibrium for a while. Maybe life could find a way to exist there.
+    Maybe a fifth fundamental force separated itself, and the universe would inflate again, settling into a new type of equilibrium for a while. Maybe life could find a way to exist there.
     
     Maybe it was a simulation that served its purpose or reached its computational resource limit.
     
     Maybe the universe existed in some higher dimensional place. But what contained that place, and what contained *that* place, and so on?
     
-    Maybe some deity was testing them. But why? And why were they so distant from their creation?
+    Maybe some deity was testing them. But for what purpose? And why were they so distant from their creation?
     
     Maybe
     
@@ -260,7 +260,7 @@ const AlbumNotes = {
     
     Maybe it was enough for some of them. A happenstance to be questioned and cherished all at once.
         
-    Maybe they could live their short lives, faced with the existential loneliness of it all, and still believe the fluke was beautiful. That it was everything.`,
+    Maybe they could live their short lives, faced with the existential loneliness of it all, and still believe that the fluke was beautiful. That it was EVERYTHING.`,
 }
 
 export default AlbumNotes;

@@ -1,11 +1,18 @@
-import { useEffect, useState } from "react";
-import NasaImagesApi from "../service/NasaImagesApi";
+import { FC, SyntheticEvent, useState } from "react";
+import NasaImagesApi, { NasaSearchResult } from "../service/NasaImagesApi";
+import { CommonScreenProps } from "../components/Navigator";
 
-const ImgSelect = ({nasaItem, onSelect, onRemove}) => {
+type ImgSelectProps = {
+    nasaItem:NasaSearchResult,
+    onSelect:(evt:SyntheticEvent)=>any,
+    onRemove:(evt:SyntheticEvent)=>any,
+}
+
+const ImgSelect:FC<ImgSelectProps> = ({nasaItem, onSelect, onRemove}) => {
 
     return (
         <div style={{width:300, height:300, position:'relative'}}>
-            <img src={nasaItem.thumb} style={{maxWidth:"100%", maxHeight:"100%", objectFit:'contain'}}/>
+            <img src={nasaItem.thumb} style={{maxWidth:"100%", maxHeight:"100%", objectFit:'contain'}} alt=""/>
             <button style={{position:'absolute', left:0, top:0, backgroundColor:"#800", padding:10, borderRadius:10}} onClick={onRemove}>
                 <span>X</span>
             </button>
@@ -16,12 +23,14 @@ const ImgSelect = ({nasaItem, onSelect, onRemove}) => {
     )
 };
 
-const NasaTestPage = ({nav, fullyLoaded}) => {
-    const [s, setS] = useState("");
-    const [images, setImages] = useState([]);
-    const [selectedImages, setSelectedImages] = useState([]);
+interface NasaTestPageProps extends CommonScreenProps {}
 
-    const submit = async (e) => {
+const NasaTestPage:FC<NasaTestPageProps> = () => {
+    const [s, setS] = useState("");
+    const [images, setImages] = useState<NasaSearchResult[]>([]);
+    const [selectedImages, setSelectedImages] = useState<NasaSearchResult[]>([]);
+
+    const submit = async (e:SyntheticEvent) => {
         e.preventDefault();
 
         if (s && s.length > 0) {
@@ -31,14 +40,14 @@ const NasaTestPage = ({nav, fullyLoaded}) => {
             
             const imgThumbs = results;
 
-            //console.log(JSON.stringify(imgThumbs));
-
-            setImages(imgThumbs)
+            if (imgThumbs) {
+                setImages(imgThumbs);
+            }
             setSelectedImages([]);
         }
     }
 
-    const select = (item) => {
+    const select = (item:NasaSearchResult) => {
         const newImgs = images.filter(i => i !== item);
 
         const newSelectedImgs = selectedImages;
@@ -48,7 +57,7 @@ const NasaTestPage = ({nav, fullyLoaded}) => {
         setSelectedImages(newSelectedImgs);
     }
 
-    const remove = (item) => {
+    const remove = (item:NasaSearchResult) => {
         const newImgs = images.filter(i => i !== item);
 
         setImages(newImgs);
